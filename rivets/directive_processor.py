@@ -4,6 +4,7 @@ import shlex
 class DirectiveProcessor:
 
 	HEADER_PATTERN = re.compile(r"""(
+									(\\\#\\\#\\\# \\n?(.*?)\\n? \\\#\\\#\\\#) |
 									(//.*(?:\\n)?) |
 									(\\\#.*(?:\\n))
 								)+""",re.X)
@@ -13,18 +14,28 @@ class DirectiveProcessor:
 							""",re.X)
 
 	@staticmethod
-	def find_directives(content):
-		headers = re.findall(DirectiveProcessor.HEADER_PATTERN, content)
-		directives = []
-		for header in headers:
-			directives.extend(re.findall(DirectiveProcessor.DIRECTIVE_PATTERN,header[0]))
-		directives[:] = [DirectiveProcessor.parse_directive(directive) for directive in directives]
+	def find_directives(file):
+		directives = {}
+		i=1
+		for line in file:
+			if re.search(DirectiveProcessor.HEADER_PATTERN,line):
+				match = re.search(DirectiveProcessor.DIRECTIVE_PATTERN,line)
+
+				if match:
+					print match.group(1)
+					directives[i] = DirectiveProcessor.parse_directive(match.group(1))
+
+			i = i+1
+
+		file.seek(0)
 		print '### DIRECTIVES ###'
 		print directives
 		return directives
 
 	@staticmethod
 	def parse_directive(directive):
+		comments_pattern = re.compile(r"[\\\"\\\'\\\n\\\r]")
+		stripped = comments_pattern.sub('',directive)
 		directive = [directive]
-		directive.extend(shlex.split(directive[0],True))
+		directive.extend(stripped.split(' '))
 		return directive

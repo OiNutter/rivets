@@ -1,6 +1,5 @@
 import engines
 import crawl
-import codecs
 import os
 from directive_processor import DirectiveProcessor
 
@@ -26,8 +25,7 @@ class Environment:
 		if not found_files:
 			return False
 
-		processed_content = content = codecs.open(found_files[0],'r').read()
 		engine = engines.get_engine_for_file(found_files[0],self)	
-		processed_content = engine.process(content)
+		processed_content = engine.process()
 
 		return processed_content
