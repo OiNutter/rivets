@@ -8,14 +8,19 @@ def get_engine_for_file(file,env):
 	file_name,file_ext = os.path.splitext(file)
 
 	if(file_ext == '.js'):
+		print '### JS ###'
 		return JS(file,env)
 	elif(file_ext=='.css'):
+		print '### CSS ###'
 		return CSS(file,env)
-	elif(file_ext=='.css.scss'):
+	elif(file_ext=='.scss'):
+		print '### SCSS ###'
 		return SCSS(file,env)
-	elif(file_ext=='.js.coffee'):
+	elif(file_ext=='.coffee'):
+		print '### COFFEE ###'
 		return Coffee(file,env)
 	else:
+		print file_ext
 		return Engine(file,env)
 
 #####################
@@ -38,9 +43,10 @@ class Engine(object):
 		return None
 
 	def process(self):
+		self._preprocess()
 		directives = DirectiveProcessor.find_directives(self._file)
 		self._includes = {}
-		self._preprocess()
+		
 
 		i = 1
 		for line in self._file:
@@ -69,7 +75,7 @@ class Engine(object):
 class JS(Engine):
 
 	def __init__(self,file,env):
-		self._supported_extensions.append('js')
+		self._supported_extensions.extend(['.js','.js.coffee'])
 		super(JS,self).__init__(file,env)
 
 ##############
@@ -77,37 +83,35 @@ class JS(Engine):
 ##############
 class CSS(Engine):
 
-	def __init__(self,env):
-		self._supported_extensions.append('css')
-		self._env = env
+	def __init__(self,file,env):
+		self._supported_extensions.extend(['.css','.css.scss'])
+		super(CSS,self).__init__(file,env)
 
 #######################
 # CoffeeScript Engine #
 #######################
 class Coffee(Engine):
 
-	def __init__(self,env):
+	def __init__(self,file,env):
 		self._supported_extensions.append('js')
 		self._supported_extensions.append('coffee')
-		self._env = env
+		super(Coffee,self).__init__(file,env)
 
 	def _preprocess(self):
 		# replace comments with block comments so they're preserved
-		content = self._replace_comments(content)
-		return self._coffeescript.compile(content)
+		self._replace_comments()
+		content = self._file.read()
+		self._file = io.TextIOBase().write(coffeescript.compile(content))
 
-	def _replace_comments(self,content):
-		comment_pattern.compile(r"(\\\#.*(?:\\n))")
+	def _replace_comments(self):
+		comment_pattern = re.compile(r"(\\\#.*(?:\\n))")
+		content = self._file.read()
 		matches = comment_pattern.findall(content)
-		
+		print '### Comments ###'
+		print matches
 		for match in matches:
 			content.sub(match[0],'### ' + match[1] + ' ###')
-		
-		return content
-
-	def replace_directive(self,content,include,directive):
-		pattern = re.compile(r"//= " + directive[0])
-		return pattern.sub(include,content)
+		self._file = io.TextIOBase().write(content)
 
 ###############
 # SASS Engine #

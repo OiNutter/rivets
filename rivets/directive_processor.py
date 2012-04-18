@@ -4,9 +4,10 @@ import shlex
 class DirectiveProcessor:
 
 	HEADER_PATTERN = re.compile(r"""(
-									(\\\#\\\#\\\# \\n?(.*?)\\n? \\\#\\\#\\\#) |
-									(//.*(?:\\n)?) |
-									(\\\#.*(?:\\n))
+									(\/\*\n?(.*?)\n?\*\/) |
+									(\#\#\#\n?(.*?)\n?\#\#\#) |
+									(//.*(?:\n)?) |
+									(\#.*(?:\n))
 								)+""",re.X)
 
 	DIRECTIVE_PATTERN = re.compile(r"""
@@ -19,6 +20,7 @@ class DirectiveProcessor:
 		i=1
 		for line in file:
 			if re.search(DirectiveProcessor.HEADER_PATTERN,line):
+				print 'matched'
 				match = re.search(DirectiveProcessor.DIRECTIVE_PATTERN,line)
 
 				if match:
