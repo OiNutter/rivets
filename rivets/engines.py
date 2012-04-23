@@ -76,6 +76,7 @@ class JS(Engine):
 
 	def __init__(self,file,env):
 		self._supported_extensions.extend(['.js','.js.coffee'])
+		self.mime_type = 'application/javascript'
 		super(JS,self).__init__(file,env)
 
 ##############
@@ -85,6 +86,7 @@ class CSS(Engine):
 
 	def __init__(self,file,env):
 		self._supported_extensions.extend(['.css','.css.scss'])
+		self.mime_type = 'text/css'
 		super(CSS,self).__init__(file,env)
 
 #######################
@@ -93,8 +95,8 @@ class CSS(Engine):
 class Coffee(Engine):
 
 	def __init__(self,file,env):
-		self._supported_extensions.append('js')
-		self._supported_extensions.append('coffee')
+		self._supported_extensions.extend(['.js','.js.coffee'])
+		self.mime_type = 'application/javascript'
 		super(Coffee,self).__init__(file,env)
 
 	def _preprocess(self):
@@ -111,7 +113,7 @@ class Coffee(Engine):
 		print matches
 		for match in matches:
 			content.sub(match[0],'### ' + match[1] + ' ###')
-		self._file = io.TextIOBase().write(content)
+		io.BufferedWriter(self._file).write(content)
 
 ###############
 # SASS Engine #
