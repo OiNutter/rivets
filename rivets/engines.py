@@ -1,126 +1,38 @@
-from directive_processor import DirectiveProcessor
-import re
-import os
-import io
-import coffeescript
+import utils
 
-def get_engine_for_file(file,env):
-	file_name,file_ext = os.path.splitext(file)
+engines = {}
 
-	if(file_ext == '.js'):
-		print '### JS ###'
-		return JS(file,env)
-	elif(file_ext=='.css'):
-		print '### CSS ###'
-		return CSS(file,env)
-	elif(file_ext=='.scss'):
-		print '### SCSS ###'
-		return SCSS(file,env)
-	elif(file_ext=='.coffee'):
-		print '### COFFEE ###'
-		return Coffee(file,env)
+def engines(ext = None):
+	''' Returns a `Hash` of `Engine`s registered on the `Environment`.
+    	If an `ext` argument is supplied, the `Engine` associated with
+    	that extension will be returned.
+    	
+    	environment.engines()
+    	# => {".coffee" => CoffeeScriptTemplate, ".sass" => SassTemplate, ...}
+    	
+    	environment.engines('.coffee')
+    	# => CoffeeScriptTemplate
+    '''
+	if ext:
+		ext = utils.normalize_extension(ext)
+		return engines.engines[ext]
 	else:
-		print file_ext
-		return Engine(file,env)
+		return engines.engines.copy()
 
-#####################
-# Base Engine Class #
-#####################
-class Engine(object):
+def engine_extensions():
+	''' Returns a `List` of engine extension `String`s.
+    		
+    	environment.engine_extensions()
+    	# => ['.coffee', '.sass', ...]
+	'''
+	return engines.engines.keys()
 
-	_supported_extensions = []
-	_includes = {}
+def register_engine(ext,klass):
+	''' Registers a new Engine `klass` for `ext`. If the `ext` already
+   		has an engine registered, it will be overridden.
 
-	def __init__(self,file,env):
-		self._env = env
-		self._file = io.open(file,'r',encoding = self._env._default_encoding)
-		self._includes = {}
+    	environment.register_engine '.coffee', CoffeeScriptTemplate
+   	'''
 
-	def _preprocess(self):
-		self._processed_content = ""
-
-	def _postprocess(self):
-		return None
-
-	def process(self):
-		self._preprocess()
-		directives = DirectiveProcessor.find_directives(self._file)
-		self._includes = {}
-		
-
-		i = 1
-		for line in self._file:
-			
-			if directives and directives.has_key(i) and not directives[i][2] in self._env._included_files:
-				print 'matched line'
-				found_includes = self._env._trail.find(re.sub(r' ','',directives[i][2]))
-
-				if found_includes:
-					engine = get_engine_for_file(found_includes[0],self._env)
-					self._processed_content = self._processed_content + engine.process()
-				else:
-					self._processed_content = self._processed_content + line
-			else:
-					self._processed_content = self._processed_content + line
-
-			i = i +1
-
-		self._postprocess()
-
-		return self._processed_content
-
-#####################
-# Javascript Engine #
-#####################
-class JS(Engine):
-
-	def __init__(self,file,env):
-		self._supported_extensions.extend(['.js','.js.coffee'])
-		self.mime_type = 'application/javascript'
-		super(JS,self).__init__(file,env)
-
-##############
-# CSS Engine #
-##############
-class CSS(Engine):
-
-	def __init__(self,file,env):
-		self._supported_extensions.extend(['.css','.css.scss'])
-		self.mime_type = 'text/css'
-		super(CSS,self).__init__(file,env)
-
-#######################
-# CoffeeScript Engine #
-#######################
-class Coffee(Engine):
-
-	def __init__(self,file,env):
-		self._supported_extensions.extend(['.js','.js.coffee'])
-		self.mime_type = 'application/javascript'
-		super(Coffee,self).__init__(file,env)
-
-	def _preprocess(self):
-		# replace comments with block comments so they're preserved
-		self._replace_comments()
-		content = self._file.read()
-		self._file = io.TextIOBase().write(coffeescript.compile(content))
-
-	def _replace_comments(self):
-		comment_pattern = re.compile(r"(\\\#.*(?:\\n))")
-		content = self._file.read()
-		matches = comment_pattern.findall(content)
-		print '### Comments ###'
-		print matches
-		for match in matches:
-			content.sub(match[0],'### ' + match[1] + ' ###')
-		io.BufferedWriter(self._file).write(content)
-
-###############
-# SASS Engine #
-###############
-class SCSS(Engine):
-
-	def __init__(self,env):
-		self._supported_extensions.append('css')
-		self._supported_extensions.append('scss')
-		self._env = env
+	ext = utils.normalize_extension(ext)
+	engines.engines[ext] = klass
