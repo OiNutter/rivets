@@ -155,7 +155,8 @@ def unregister_bundle_processor(mime_type, klass):
 
     _bundleprocessors[mime_type].remove(klass)
 
-def get_css_compressor():
+@property
+def css_compressor():
   ''' Return CSS compressor or None if none is set '''
   compressor = None
   for processor in bundle_processors['text/css']:
@@ -163,7 +164,8 @@ def get_css_compressor():
       compressor = processor
   return compressor
     
-def set_css_compressor(compressor=None):
+@css_compressor.setter
+def css_compressor(compressor=None):
   ''' Assign a compressor to run on `text/css` assets.
 
       The compressor object must respond to `compress` or `compile`.
@@ -176,7 +178,8 @@ def set_css_compressor(compressor=None):
 
   register_bundle_processor('text/css', klass)
 
-def get_js_compressor():
+@property
+def js_compressor():
   ''' Return JS compressor or None if none is set '''
   compressor = None
   for processor in bundle_processors['application/javascript']:
@@ -184,7 +187,8 @@ def get_js_compressor():
       compressor = processor
   return compressor
  
-def set_js_compressor(compressor=None):
+@js_compressor.setter
+def js_compressor(compressor=None):
   ''' Assign a compressor to run on `application/javascript` assets.
 
       The compressor object must respond to `compress` or `compile`.

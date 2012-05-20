@@ -1,31 +1,85 @@
+from base import Base
+from context import Context
+from index import Index
+
+import mime
+import processing
 import engines
+import paths
+
 import crawl
-import os
-from directive_processor import DirectiveProcessor
+import logging
 
-class Environment:
+class Environment(Base):
+    ''' `Environment` should initialized with your application's root
+        directory. This should be the same as your Rails or Rack root.
+        
+             env = Environment.new(Rails.root)
+    '''
 
-	_valid_exts = ['.js','.css','.css.scss','.js.coffee']
-	_default_encoding = 'UTF-8'
+    def __new__(self,root = ".",block=None):
+      self.trail = crawl.Trail(root)
 
-	def __init__(self, root="."):
-		self._trail = crawl.Trail(root)
-		self._trail.append_extensions(self._valid_exts)
-		self._included_files = []
+      self.logger = logging.getLogger()
+      self.logger.setLevel(logging.CRITICAL)
 
-	def add_path(self,path):
-		self._trail.append_path(path)
+      self.default_external_encoding = 'UTF-8'
 
-	def add_paths(self,paths):
-		self._trail.append_paths(paths)
+      # Create a safe `Context` subclass to mutate
+      self.context_class = type('ThisContext',(Context),{})()
 
-	def compile(self,target):
-		found_files = self._trail.find(target)
+      # Set MD5 as the default digest
+      import hashlib
+      self.digest_class = hashlib.md5
+      self.version = ''
 
-		if not found_files:
-			return False
+      self.mime_types        = mime.registered_mime_types
+      self.engines           = engines.engines
+      self.preprocessors     = processing.preprocessors
+      self.postprocessors    = processing.postprocessors
+      self.bundle_processors = processing.bundle_processors
 
-		engine = engines.get_engine_for_file(found_files[0],self)	
-		processed_content = engine.process()
+      for path in paths.paths:
+        append_path(path,self.trail)
 
-		return processed_content
+      for ext,klass in self.engines.iteritems():
+        processing.add_engine_to_trail(ext, klass)
+
+      for ext,type in self.mime_types.iteritems():
+        self.trail.append_extension(ext)
+
+      self.expire_index()
+
+      if block:
+        return block()
+      else:
+        return self
+
+    def index(self):
+      ''' Returns a cached version of the environment.
+          
+          All its file system calls are cached which makes `index` much
+          faster. This behavior is ideal in production since the file
+          system only changes between deploys.
+      '''
+      return Index(self)
+
+    def find_asset(self,path, options = {}):
+      ''' Cache `find_asset` calls '''
+      if not options.has_key('bundle'):
+        options['bundle'] = True
+
+      # Ensure inmemory cached assets are still fresh on every lookup
+      asset = self.assets[cache_key_for(path, options)]
+      if asset and asset.is_fresh(self):
+        return asset
+      else:
+        asset = index.find_asset(path, options)
+        if asset:
+          # Cache is pushed upstream by Index#find_asset
+          return asset
+
+      def expire_index(self):
+        # Clear digest to be recomputed
+        self.digest = None
+        self.assets = {}
