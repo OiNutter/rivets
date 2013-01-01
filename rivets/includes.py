@@ -25,7 +25,14 @@ class Include:
 
 		self.environment.search_path.append_extensions(self.VALID_EXTENSIONS[self.ext])
 
-		self.engine = EngineRegistry.get_engine(self.ext)(self.path,{'default_encoding':self.environment.default_encoding})
+		files = files = self.environment.search_path.find(self.path)
+
+		if files:
+			self.engine = EngineRegistry.get_engine(self.ext)(files[0],{'default_encoding':self.environment.default_encoding})
+		else:
+			raise IOError("Couldn't find file: %s" % self.path)
+
+		
 
 	def process(self):
 		

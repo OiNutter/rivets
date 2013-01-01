@@ -1,4 +1,4 @@
-from rivets import Rivet
+from environment import Environment
 from engines import EngineRegistry, JSTemplate, CSSTemplate
 
 from shift.coffee import CoffeeScriptTemplate

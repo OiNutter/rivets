@@ -5,7 +5,7 @@ from directive_processor import DirectiveProcessor
 from extensions import get_extension
 from includes import Include
 
-class Rivet:
+class Environment:
 
 	files = []
 	default_encoding = 'utf8'
@@ -20,7 +20,7 @@ class Rivet:
 		for path in paths:
 			self.search_path.append_path(path)
 
-	def run(self,path):
+	def compile(self,path):
 		
 		output = Include(path,self)
 
