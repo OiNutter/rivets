@@ -21,8 +21,6 @@ class DirectiveProcessor:
 
 		header = DirectiveProcessor.HEADER_PATTERN.findall(data)
 
-		print header
-
 		for line in header:
 
 			matches = re.findall(DirectiveProcessor.DIRECTIVE_PATTERN,line[0])
@@ -48,8 +46,6 @@ class DirectiveProcessor:
 		header = DirectiveProcessor.HEADER_PATTERN.findall(data)
 
 		for line in header:
-			print line[0]
-			print re.escape(line[0])
 			
 			matches = re.findall(DirectiveProcessor.DIRECTIVE_PATTERN,line[0])
 

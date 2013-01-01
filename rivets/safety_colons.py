@@ -14,8 +14,6 @@ class SafetyColons(Template):
 		end_pattern = re.compile(r""";[\s\n\r]*\Z""",re.X)
 
 		if re.search(blank_pattern,self.data) or re.search(end_pattern,self.data):
-			print 'NO COLONS ADDED'
 			return self.data
 		else:
-			print 'ADDING COLONS'
 			return "%s;" % self.data
