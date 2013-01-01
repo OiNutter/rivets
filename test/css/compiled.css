@@ -1,0 +1,15 @@
+html,body,div,p{
+	margin:0;
+}
+
+body{
+	font:10pt/11pt Helvetica;
+};
+body{
+	height:100%;
+}
+
+#container{
+	margin:0 auto;
+	position:relative;
+};

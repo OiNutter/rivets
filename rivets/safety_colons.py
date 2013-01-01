@@ -1,25 +1,21 @@
-from shift.template import Template
 import re
 
-class SafetyColons(Template):
-	''' For JS developers who are colonfobic, concatenating JS files using
-		the module pattern usually leads to syntax errors.
-  		
-  		The `SafetyColons` processor will insert missing semicolons to the
- 		end of the file.
-	
-		This behavior can be disabled with:
+from shift.template import Template
 
-  			environment.unregister_postprocessor('application/javascript', rivets.safety_colons.SafetyColons)
-  	'''
-  	
+class SafetyColons(Template):
+
 	def prepare(self):
 		pass
 
-   	def evaluate(self,context, locals, block=None):
-   		''' If the file is blank or ends in a semicolon, leave it as is '''
-   		if re.search(r"\A\s*\Z",self.data,re.M) or re.search(r";\s*\Z",re.M):
-   			return self.data
+
+	def evaluate(self,scope, locals, block=None):
+		self.data = re.sub('\A[\n\r\s]+|[\n\r\s]+\Z','',self.data)
+		blank_pattern = re.compile(r"""\A[\s\n\r]*\Z""",re.X)
+		end_pattern = re.compile(r""";[\s\n\r]*\Z""",re.X)
+
+		if re.search(blank_pattern,self.data) or re.search(end_pattern,self.data):
+			print 'NO COLONS ADDED'
+			return self.data
 		else:
-			# Otherwise, append a semicolon and newline
-			return "%s;\n" % self.data
+			print 'ADDING COLONS'
+			return "%s;" % self.data

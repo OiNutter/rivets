@@ -1,38 +1,58 @@
-import utils
+import extensions
+from shift.template import Template
+from errors import EngineError
 
-engines = {}
+class EngineRegistry:
 
-def engines(ext = None):
-	''' Returns a `Hash` of `Engine`s registered on the `Environment`.
-    	If an `ext` argument is supplied, the `Engine` associated with
-    	that extension will be returned.
-    	
-    	environment.engines()
-    	# => {".coffee" => CoffeeScriptTemplate, ".sass" => SassTemplate, ...}
-    	
-    	environment.engines('.coffee')
-    	# => CoffeeScriptTemplate
-    '''
-	if ext:
-		ext = utils.normalize_extension(ext)
-		return engines.engines[ext]
-	else:
-		return engines.engines.copy()
+	engines = {}
 
-def engine_extensions():
-	''' Returns a `List` of engine extension `String`s.
-    		
-    	environment.engine_extensions()
-    	# => ['.coffee', '.sass', ...]
-	'''
-	return engines.engines.keys()
+	@staticmethod
+	def register_engine(extension,engine):
 
-def register_engine(ext,klass):
-	''' Registers a new Engine `klass` for `ext`. If the `ext` already
-   		has an engine registered, it will be overridden.
+		ext = extensions.normalize_extension(extension)
+		if not EngineRegistry.engines.has_key(ext):
+			EngineRegistry.engines[ext] = engine
 
-    	environment.register_engine '.coffee', CoffeeScriptTemplate
-   	'''
+	@staticmethod
+	def get_engine(extension):
+		if EngineRegistry.engines.has_key(extension):
+			return EngineRegistry.engines[extension]
+		else:
+			raise EngineError("Unable to find an engine for file extension: %s"%extension)
 
-	ext = utils.normalize_extension(ext)
-	engines.engines[ext] = klass
+class JSTemplate(Template):
+
+	default_mime_type = 'application/javascript'
+
+	default_bare = False
+
+	@staticmethod
+	def is_engine_initialized():
+		return 'javascript' in globals()
+
+	def prepare(self):
+		pass
+
+	def evaluate(self,scope, locals, block=None):
+		if not hasattr(self,'output') or not self.output:
+			self.output = self.data
+
+		return self.output
+
+class CSSTemplate(Template):
+
+	default_mime_type = 'text/css'
+
+	@staticmethod
+	def is_engine_initialized():
+		return 'css' in globals()
+	
+	def prepare(self):
+		pass
+
+	def evaluate(self,scope, locals, block=None):
+		if not hasattr(self,'output') or not self.output:
+			self.output = self.data
+
+		return self.output
+

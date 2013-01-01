@@ -1,0 +1,11 @@
+h1{
+	font-weight:bold;
+
+	&:hover{
+		text-decoration: underline;
+	}
+
+	&.active{
+		color:#fff;
+	}
+}

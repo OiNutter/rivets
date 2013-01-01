@@ -1,0 +1,12 @@
+#= require foo
+
+$vertical-margin:10px;
+
+body{
+	height:100%;
+
+	#container{
+		margin:$vertical-margin auto;
+		position:relative;
+	}
+}
