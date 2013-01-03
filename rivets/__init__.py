@@ -10,5 +10,5 @@ EngineRegistry.register_engine('.css',CSSTemplate)
 EngineRegistry.register_engine('.coffee',CoffeeScriptTemplate)
 EngineRegistry.register_engine('.scss',ScssTemplate)
 
-ProcessorRegistry.register_postprocessor('.js',UglipyJSProcessor)
-ProcessorRegistry.register_postprocessor('.css',SlimmerCSSProcessor)
+ProcessorRegistry.set_minifier('.js',UglipyJSProcessor)
+ProcessorRegistry.set_minifier('.css',SlimmerCSSProcessor)

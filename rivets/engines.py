@@ -1,4 +1,4 @@
-import extensions
+from extensions import normalize_extension
 from shift.template import Template
 from errors import EngineError
 
@@ -9,16 +9,18 @@ class EngineRegistry:
 	@staticmethod
 	def register_engine(extension,engine):
 
-		ext = extensions.normalize_extension(extension)
-		if not EngineRegistry.engines.has_key(ext):
-			EngineRegistry.engines[ext] = engine
+		ext = normalize_extension(extension)
+		EngineRegistry.engines[ext] = engine
 
 	@staticmethod
 	def get_engine(extension):
-		if EngineRegistry.engines.has_key(extension):
-			return EngineRegistry.engines[extension]
+		
+		ext = normalize_extension(extension)
+
+		if EngineRegistry.engines.has_key(ext):
+			return EngineRegistry.engines[ext]
 		else:
-			raise EngineError("Unable to find an engine for file extension: %s"%extension)
+			raise EngineError("Unable to find an engine for file extension: %s"%ext)
 
 class JSTemplate(Template):
 

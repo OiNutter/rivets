@@ -1,12 +1,16 @@
-import extensions
+from extensions import normalize_extension
 from shift.template import Template
 
 class ProcessorRegistry:
 
+	# list of processors to be run before or after engine processors
 	processors = {
 		"pre":{},
 		"post":{}
 	}
+
+	# special list of post processors to be run as the last processors
+	minifiers = {}
 
 	@staticmethod
 	def register_preprocessor(extension,processor):
@@ -18,7 +22,7 @@ class ProcessorRegistry:
 
 	@staticmethod
 	def register_processor(position,extension,processor):
-		ext = extensions.normalize_extension(extension)
+		ext = normalize_extension(extension)
 		if not ProcessorRegistry.processors[position].has_key(ext):
 			ProcessorRegistry.processors[position][ext] = []
 
@@ -34,10 +38,21 @@ class ProcessorRegistry:
 
 	@staticmethod
 	def get_processors(position,extension):
-		if ProcessorRegistry.processors[position].has_key(extension):
-			return ProcessorRegistry.processors[position][extension]
+		ext = normalize_extension(extension)
+		if ProcessorRegistry.processors[position].has_key(ext):
+			return ProcessorRegistry.processors[position][ext]
 		else:
 			return []
+
+	@staticmethod
+	def set_minifier(extension,processor):
+		ext = normalize_extension(extension)
+		ProcessorRegistry.minifiers[ext] = processor
+
+	@staticmethod
+	def get_minifier(extension):
+		ext = normalize_extension(extension)
+		return ProcessorRegistry.minifiers[ext] if ProcessorRegistry.minifiers.has_key(ext) else None
 
 class UglipyJSProcessor(Template):
 

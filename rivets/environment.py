@@ -39,6 +39,11 @@ class Environment:
 		for processor in post_processors:
 			output = processor(block=lambda x: output.encode(self.default_encoding)).render()
 
+		minifier = ProcessorRegistry.get_minifier(ext)
+
+		if minifier:
+			output = minifier(block=lambda x: output.encode(self.default_encoding)).render()
+
 		return output
 
 
