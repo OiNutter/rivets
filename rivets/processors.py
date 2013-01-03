@@ -1,5 +1,3 @@
-import uglipyjs
-
 import extensions
 from shift.template import Template
 
@@ -52,7 +50,87 @@ class UglipyJSProcessor(Template):
 
 	def evaluate(self,scope, locals, block=None):
 		if not hasattr(self,'output') or not self.output:
+			import uglipyjs
 			self.output = uglipyjs.compile(self.data)
 
 		return self.output
 
+class RJSMinProcessor(Template):
+
+	@staticmethod
+	def is_engine_initialized():
+		return 'rjsmin' in globals()
+
+	def prepare(self):
+		pass
+
+	def evaluate(self,scope, locals, block=None):
+		if not hasattr(self,'output') or not self.output:
+			from rjsmin import jsmin
+			self.output = jsmin(self.data)
+
+		return self.output
+
+class SlimitProcessor(Template):
+
+	@staticmethod
+	def is_engine_initialized():
+		return 'slimit' in globals()
+
+	def prepare(self):
+		pass
+
+	def evaluate(self,scope, locals, block=None):
+		if not hasattr(self,'output') or not self.output:
+			from slimit import minify
+			self.output = minify(self.data, mangle=True, mangle_toplevel=False)
+
+		return self.output
+
+class CSSMinProcessor(Template):
+
+	@staticmethod
+	def is_engine_initialized():
+		return 'cssmin' in globals()
+
+	def prepare(self):
+		pass
+
+	def evaluate(self,scope, locals, block=None):
+		if not hasattr(self,'output') or not self.output:
+			from cssmin import cssmin
+			self.output = cssmin(self.data)
+
+ 		return self.output
+
+class SlimmerCSSProcessor(Template):
+
+	@staticmethod
+	def is_engine_initialized():
+		return 'slimmer_css' in globals()
+
+	def prepare(self):
+		pass
+
+	def evaluate(self,scope, locals, block=None):
+		if not hasattr(self,'output') or not self.output:
+			from slimmer import css_slimmer
+			self.output = css_slimmer(self.data)
+
+		return self.output
+
+class SlimmerJSProcessor(Template):
+
+	@staticmethod
+	def is_engine_initialized():
+		return 'slimmer_js' in globals()
+
+	def prepare(self):
+		pass
+
+	def evaluate(self,scope, locals, block=None):
+		if not hasattr(self,'output') or not self.output:
+			from slimmer import js_slimmer
+			self.output = js_slimmer(self.data)
+
+		return self.output
