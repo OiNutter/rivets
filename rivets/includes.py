@@ -30,7 +30,7 @@ class Include:
 		if files:
 			self.engine = EngineRegistry.get_engine(self.ext)(files[0],{'default_encoding':self.environment.default_encoding})
 		else:
-			raise IOError("Couldn't find file: %s" % self.path)
+			raise IOError("Couldn't find file %s in dir %s" % (self.path,self.environment.root))
 
 		
 
@@ -51,12 +51,11 @@ class Include:
 
 					processed = Include(files[0],self.environment).process()
 					
-					
 					self.processed_directives += processed + "\n"
-
-		output = self.engine.render()
-		#print output
-		output = self.processed_directives + output
+		
+		output = self.processed_directives + self.engine.render()
 
 		return SafetyColons(block=lambda x: output).render()
+
+
 

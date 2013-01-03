@@ -1,16 +1,22 @@
-import io
 from crawl import Crawl
 
-from directive_processor import DirectiveProcessor
 from extensions import get_extension
 from includes import Include
+from processors import ProcessorRegistry
 
 class Environment:
 
 	files = []
 	default_encoding = 'utf8'
+	root = ""
+
+	output_extensions = {
+		".coffee":".js",
+		".scss":".css"
+	}
 	
 	def __init__(self,root="."):
+		self.root = root
 		self.search_path = Crawl(root)
 
 	def add_path(self,path):
@@ -22,9 +28,18 @@ class Environment:
 
 	def compile(self,path):
 		
-		output = Include(path,self)
+		include = Include(path,self)
+		output = include.process()
+		ext = get_extension(path)
+		ext = self.output_extensions[ext] if self.output_extensions.has_key(ext) else ext
 
-		return output.process()
+		#run post processors
+		post_processors = ProcessorRegistry.get_postprocessors(ext)
+
+		for processor in post_processors:
+			output = processor(block=lambda x: output.encode(self.default_encoding)).render()
+
+		return output
 
 
 
