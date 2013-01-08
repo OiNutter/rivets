@@ -7,5 +7,5 @@ setup(name='Rivets',
 	  author_email='will@oinutter.co.uk',
 	  packages=['rivets'],
 	  package_dir={'rivets': 'rivets'},
-	  requires=['crawl','shift','uglipyjs','slimmer']
+	  requires=['crawl','lean','uglipyjs','slimmer']
 	  )

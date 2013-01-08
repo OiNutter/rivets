@@ -1,5 +1,5 @@
 from extensions import normalize_extension
-from shift.template import Template
+from lean.template import Template
 from errors import EngineError
 
 class EngineRegistry:

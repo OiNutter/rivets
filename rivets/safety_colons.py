@@ -1,6 +1,6 @@
 import re
 
-from shift.template import Template
+from lean.template import Template
 
 class SafetyColons(Template):
 
