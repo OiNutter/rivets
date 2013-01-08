@@ -19,7 +19,8 @@ I'm using [Crawl](https://github.com/OiNutter/crawl), the
 assets. That is in a similar situation to Rivets, although slightly more
 along in the development cycle, as they are being developed in tandem. I'm also using 
 [Shift](https://github.com/OiNutter/shift), another Ruby port, this time of 
-[Tilt](https://github.com/rtomayko/tilt)
+[Tilt](https://github.com/rtomayko/tilt) to provide a generic interface to the various templating and
+processing modules being used.
 
 Requirements
 ------------
