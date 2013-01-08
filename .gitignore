@@ -2,3 +2,4 @@
 *.pyc
 build/*
 .DS_Store
+dist/
