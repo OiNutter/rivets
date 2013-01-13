@@ -18,3 +18,20 @@ def get_extension(file):
 		pattern = re.sub(r'^[^.]*\.?','',pattern)
 
    	return ".%s" % ext
+
+def get_output_extension(file):
+	pattern = str(file).lower()
+
+	full_ext = re.findall(r'(\..+)+$',pattern)
+
+	if full_ext:
+		full_ext.reverse()
+		full_ext = full_ext[0]
+
+		exts = re.findall(r'\.[^.]*',full_ext)
+		exts.reverse()
+		return exts[1] if len(exts) > 1 else exts[0]
+
+	return ''
+
+

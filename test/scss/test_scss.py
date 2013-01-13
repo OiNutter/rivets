@@ -3,7 +3,8 @@ from os import path
 sys.path.insert(0,'../../')
 
 import rivets
-env = rivets.Environment(root=path.dirname(path.abspath( __file__ )))
+env = rivets.Environment()
+env.add_path(path.dirname(path.abspath( __file__ )))
 output = env.compile('test.css.scss')
 f = open('compiled.css','w')
 f.write(output.encode('utf8'))

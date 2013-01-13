@@ -1,1 +1,38 @@
-var Bar,__bind=function(i,n){return function(){return i.apply(n,arguments)}};Bar=function(){function i(){this.initialize=__bind(this.initialize,this)}return i.name="Bar",i.prototype.initialize=function(){return this.bob="test"},i}();var Foo,__bind=function(i,n){return function(){return i.apply(n,arguments)}};Foo=function(){function i(){this.initialize=__bind(this.initialize,this)}return i.name="Foo",i.prototype.initialize=function(){return this.bar=new Bar},i}();
+var Bar,
+  __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; };
+
+Bar = (function() {
+
+  Bar.name = 'Bar';
+
+  function Bar() {
+    this.initialize = __bind(this.initialize, this);
+
+  }
+
+  Bar.prototype.initialize = function() {
+    return this.bob = 'test';
+  };
+
+  return Bar;
+
+})();
+var Foo,
+  __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; };
+
+Foo = (function() {
+
+  Foo.name = 'Foo';
+
+  function Foo() {
+    this.initialize = __bind(this.initialize, this);
+
+  }
+
+  Foo.prototype.initialize = function(f) {
+    return this.bar = new Bar();
+  };
+
+  return Foo;
+
+})();
