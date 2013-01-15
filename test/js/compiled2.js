@@ -9,4 +9,4 @@ var Mustache=typeof module!="undefined"&&module.exports||{};(function(a){functio
  */
 
 
-var Blah = function(){return 'Blah'}()
+var Blah = function(){return 'Blah'}();

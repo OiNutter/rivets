@@ -6,3 +6,6 @@ class MimeTypeError(Exception):
 
 class ContentTypeMismatch(Exception):
 	pass
+
+class UnserializeError(Exception):
+	pass

@@ -1,0 +1,1 @@
+{"files":{"blah2-aa68f9814fcb8b38521e65d66cbf4a0f.js":{"logical_path":"blah2.js","mtime":"2013-01-03T22:12:33+00:00","size":25615,"digest":"aa68f9814fcb8b38521e65d66cbf4a0f"}},"assets":{"blah2.js":"blah2-aa68f9814fcb8b38521e65d66cbf4a0f.js"}}

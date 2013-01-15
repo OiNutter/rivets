@@ -1,27 +1,87 @@
 from asset import Asset
 from os import stat
-from datetime import datetime
+import re
 
+from ..errors import UnserializeError
 from ..utils import unique_list
 
 class ProcessedAsset(Asset):
 	
-	def __init__(self,environment,logical_path,pathname):
-		super(ProcessedAsset,self).__init__(environment,logical_path,pathname)
+	def __init__(self,environment,logical_path,pathname,init=True):
+		if init:
+			super(ProcessedAsset,self).__init__(environment,logical_path,pathname)
 
-		context = environment.context_class(environment,logical_path,pathname)
+			context = environment.context_class(environment,logical_path,pathname)
 
-		self.source = context.evaluate(pathname)
-		self.length = len(self.source)
-		digest = environment.get_digest()
-		digest.update(self.source.encode('utf8'))
-		self.digest = digest.hexdigest()
+			self.source = context.evaluate(pathname)
+			self.length = len(self.source)
+			digest = environment.get_digest()
+			digest.update(self.source.encode('utf8'))
+			self.digest = digest.hexdigest()
 
-		self.build_required_assets(environment,context)
-		self.build_dependency_paths(environment,context)
+			self.build_required_assets(environment,context)
+			self.build_dependency_paths(environment,context)
 
-		self.dependency_digest = self.compute_dependency_digest(environment)
+			self.dependency_digest = self.compute_dependency_digest(environment)
 
+	def init_with(self,environment,coder):
+		super(ProcessedAsset,self).init_with(environment,coder)
+
+		self.source = coder['source']
+		self.dependency_digest = coder['dependency_digest']
+		self.required_assets = []
+
+		for path in coder['required_paths']:
+			p = self.expand_root_path(path)
+
+			matched = False
+			for search_path in environment.search_path.paths:
+				if re.search(re.escape(search_path),p):
+					matched = True
+
+			if not matched:
+				raise UnserializeError("%s isn't in paths" % p)
+
+			self.required_assets.append(self if p == self.pathname else environment.find_asset(p,{'bundle':False}))
+
+		self.dependency_paths = []
+
+		for dep in coder['dependency_paths']:
+			self.dependency_paths.append(DependencyFile(self.expand_root_path(dep['path']),dep['mtime'],dep['digest']))
+
+	def encode_with(self,coder):
+		coder = super(ProcessedAsset,self).encode_with(coder)
+
+		coder['source'] = self.source
+		coder['dependency_digest'] = self.dependency_digest
+
+		coder['required_paths'] = []
+
+		for asset in self.required_assets:
+			coder['required_paths'].append(self.relativize_root_path(asset.pathname))
+
+		coder['dependency_paths'] = []
+
+		for dep in self.dependency_paths:
+			coder['dependency_paths'].append({
+					'path':self.relativize_root_path(dep.pathname),
+					'mtime':dep.mtime,
+					'digest':dep.digest
+
+				})
+
+		return coder
+
+	def is_fresh(self,environment):
+		fresh = True
+
+		for dep in self.dependency_paths:
+			fresh = self.is_dependency_fresh(environment,dep)
+
+			if not fresh:
+				break
+
+		return fresh
 
 	def build_required_assets(self,environment,context):
 		include_paths = context.required_paths
@@ -63,8 +123,9 @@ class ProcessedAsset(Asset):
 				dependency_paths[dep] = True
 			else:
 				asset = environment.find_asset(path, {'bundle': False})
-				for dep in asset.dependency_paths:
-					dependency_paths[dep] = True
+				if asset:
+					for dep in asset.dependency_paths:
+						dependency_paths[dep] = True
 
 		self.dependency_paths = dependency_paths.keys()
 
@@ -80,7 +141,7 @@ class DependencyFile:
 
 	def __init__(self,pathname, mtime, digest):
           self.pathname = pathname
-          self.mtime    = datetime.fromtimestamp(mtime) if isinstance(mtime,str) else ''
+          self.mtime    = mtime
           self.digest = digest
 
 	def equals(self,other):

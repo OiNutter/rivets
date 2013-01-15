@@ -14,6 +14,6 @@ class SafetyColons(Template):
 		end_pattern = re.compile(r""";[\s\n\r]*\Z""",re.X)
 
 		if re.search(blank_pattern,self.data) or re.search(end_pattern,self.data):
-			return self.data
+			return "%s\n" % self.data if not self.data.endswith('\n') else self.data			
 		else:
-			return "%s;" % self.data
+			return "%s;\n" % self.data

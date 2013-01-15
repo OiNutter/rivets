@@ -4,7 +4,8 @@ sys.path.insert(0,'../../')
 
 import rivets
 env = rivets.Environment()
-env.add_path(path.dirname(path.abspath( __file__ )))
+env.cache = {}
+env.append_path(path.dirname(path.abspath( __file__ )))
 output = env.compile('foo.js.coffee')
 f = open('compiled.js','w')
 f.write(output.encode('utf8'))
