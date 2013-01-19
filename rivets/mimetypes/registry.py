@@ -16,8 +16,8 @@ class MimeTypeRegistry:
 			return None
 
 	@staticmethod
-	def get_extension_for_mimetype(mimetype):
+	def get_extension_for_mimetype(mime):
 
 		for ext,mimetype in MimeTypeRegistry.mimetypes.iteritems():
-			if mimetype.lower() == mimetype.lower():
+			if mimetype.lower() == mime.lower():
 				return ext

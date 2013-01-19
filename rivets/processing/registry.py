@@ -1,3 +1,5 @@
+from processor import Processor
+
 class ProcessorRegistry:
 
 	# list of processors to be run before or after engine processors
@@ -13,19 +15,24 @@ class ProcessorRegistry:
 	css_compressor=None
 
 	@staticmethod
-	def register_preprocessor(mimetype,processor):
-		ProcessorRegistry.register_processor('pre',mimetype,processor)
+	def register_preprocessor(mimetype,processor,callback=None):
+		ProcessorRegistry.register_processor('pre',mimetype,processor,callback)
 
 	@staticmethod
-	def register_postprocessor(mimetype,processor):
-		ProcessorRegistry.register_processor('post',mimetype,processor)
+	def register_postprocessor(mimetype,processor,callback=None):
+		ProcessorRegistry.register_processor('post',mimetype,processor,callback)
 
 	@staticmethod
-	def register_bundleprocessor(mimetype,processor):
-		ProcessorRegistry.register_processor('bundle',mimetype,processor)
+	def register_bundleprocessor(mimetype,processor,callback=None):
+		ProcessorRegistry.register_processor('bundle',mimetype,processor,callback)
 
 	@staticmethod
-	def register_processor(position,mimetype,processor):
+	def register_processor(position,mimetype,processor,callback=None):
+
+		if callback:
+			name = str(processor)
+			processor = type(name,(Processor,),{"processor":callback})
+
 		if not ProcessorRegistry.processors[position].has_key(mimetype):
 			ProcessorRegistry.processors[position][mimetype] = []
 

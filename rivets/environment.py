@@ -31,7 +31,7 @@ class Environment(Base):
 	def index(self):
 		return Index(self)
 
-	def find_asset(self,path,options=None):
+	def find_asset(self,path,**options):
 
 		if not options:
 			options = {}
@@ -39,12 +39,12 @@ class Environment(Base):
 		if not options.has_key('bundle'):
 			options['bundle'] = True
 
-		key = self.cache_key_for(path,options)
+		key = self.cache_key_for(path,**options)
 		asset = self.assets[key] if self.assets.has_key(key) else None
 		if asset and asset.is_fresh(self):
 			return asset
 		else:
-			asset = self.index().find_asset(path,options)
+			asset = self.index().find_asset(path,**options)
 			if asset:
 				return asset
 

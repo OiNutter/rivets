@@ -1,10 +1,11 @@
 import os
 import io
 from hashlib import md5
+import json
 
-from assets import Asset
+from assets import Asset, AssetAttributes, BundledAsset, ProcessedAsset, StaticAsset
+from errors import FileNotFound
 
-from assets import AssetAttributes,BundledAsset,ProcessedAsset,StaticAsset
 
 class Base(object):
 
@@ -24,9 +25,9 @@ class Base(object):
 	def get_file_digest(self,path):
 		if os.path.isfile(path):
 			digest = self.get_digest()
-			data = io.open(path,encoding = self.default_encoding).read()
+			data = open(path).read()
 			data = data.replace('\t',' ')
-			digest.update(data.encode('utf8'))
+			digest.update(data)
 			return digest
 		elif os.path.isdir(path):
 			entries = self.search_path.entries(path)
@@ -67,25 +68,25 @@ class Base(object):
 		self.engines.register_engine(extension,engine)
 		self.add_engine_to_search_path(extension,engine)
 
-	def register_preprocesser(self,mimetype,processor):
+	def register_preprocessor(self,mimetype,processor,callback=None):
 		self.expire_index()
-		self.processors.register_preprocesser(mimetype,processor)
+		self.processors.register_preprocessor(mimetype,processor,callback)
 
 	def unregister_preprocessor(self,mimetype,processor):
 		self.expire_index()
 		self.processors.unregister_preprocessor(mimetype,processor)
 
-	def register_postprocesser(self,mimetype,processor):
+	def register_postprocessor(self,mimetype,processor,callback=None):
 		self.expire_index()
-		self.processors.register_postprocesser(mimetype,processor)
+		self.processors.register_postprocessor(mimetype,processor,callback)
 
 	def unregister_postprocessor(self,mimetype,processor):
 		self.expire_index()
 		self.processors.unregister_postprocessor(mimetype,processor)
 
-	def register_bundleprocesser(self,mimetype,processor):
+	def register_bundleprocessor(self,mimetype,processor,callback=None):
 		self.expire_index()
-		self.processors.register_bundleprocesser(mimetype,processor)
+		self.processors.register_bundleprocessor(mimetype,processor,callback)
 
 	def unregister_bundleprocessor(self,mimetype,processor):
 		self.expire_index()
@@ -120,20 +121,35 @@ class Base(object):
 	def get_content_type_of(self,path):
 		return self.get_attributes_for(path).get_content_type()
 
-	def find_asset(self,path,options=None):
-		asset = self.search_path.find(path)
+	def __getitem__(self,path):
+		return self.find_asset(path)
 
-		if asset:
-			return self.build_asset(asset,path,options)
+	def find_asset(self,path,**options):
+		logical_path = path
+
+		if os.path.isabs(path):
+			if not self.stat(path):
+				return None
+			logical_path = self.get_attributes_for(path).get_logical_path()
 		else:
-			raise IOError("Couldn't find file %s in dir %s" % (path, self.root))
+			try:
+				path = self.resolve(logical_path)
 
-	def build_asset(self,logical_path,path,options=None):
+				filename,extname = os.path.splitext(path)
 
-		if not options:
-			options = {
-				"bundle":True
-			}
+				if extname == "":
+					expanded_logical_path = self.get_attributes_for(path).get_logical_path()
+					newfile,newext = os.path.splitext(expanded_logical_path)
+					logical_path += newext
+			except FileNotFound:
+				return None
+
+		return self.build_asset(logical_path,path,**options)
+
+	def build_asset(self,logical_path,path,**options):
+
+		if not options.has_key('bundle'):
+			options["bundle"] = True
 
 		if self.get_attributes_for(path).get_processors():
 
@@ -144,15 +160,38 @@ class Base(object):
 		else:
 			return StaticAsset()
 
-	def resolve(self,logical_path,options=None,callback=None):
+	def resolve(self,logical_path,**options):
 
-		if callback:
-			args = self.get_attributes_for(logical_path).search_paths() + [options]
-			path = self.search_path.find(*args)
-			return callback(path)
+		if options.has_key('callback') and options['callback']:
+			callback = options.pop('callback')
+			def process_asset(path):
+				if path:
+					if os.path.basename(path)=='component.json':
+						component = json.loads(open(path).read())
+
+						if component.has_key('main'):
+							if isinstance(component['main'],str):
+								return options['callback'](os.path.join(os.path.dirname(path),component['main']))
+							elif isinstance(component['main'],list):
+								filename,ext = os.path.splitext(logical_path)
+
+								for fn in component['main']:
+									fn_name,fn_ext = os.path.splitext(fn)
+									if ext == "" or ext == fn_ext:
+										return callback(os.path.join(os.path.dirname(path),fn))
+
+					else:
+						return callback(path)
+
+			args = self.get_attributes_for(logical_path).search_paths()
+			path = self.search_path.find(*args,**options)
+			asset = process_asset(path)
 		else:
-			return self.resolve(logical_path,options,lambda x: x)
-		raise IOError("Couldn't find file %s" % logical_path)
+			options['callback'] = lambda x: x
+			asset = self.resolve(logical_path,**options)
+		if asset:
+			return asset
+		raise FileNotFound("Couldn't find file %s" % logical_path)
 
 	def compile(self,path):
 		
@@ -163,7 +202,7 @@ class Base(object):
 	# Caching #
 	###########
 
-	def cache_key_for(self,path,options):
+	def cache_key_for(self,path,**options):
 		return "%s:%i" % (path,1 if options.has_key('bundle') and options['bundle'] else 0)
 
 	def cache_get(self,key):
@@ -181,13 +220,13 @@ class Base(object):
 	def cache_asset(self,path,callback=None):
 
 		if self.cache is None:
-			return callback(path)
+			return callback()
 		else:
 			asset = Asset.from_hash(self,self.cache_get_hash(path))
 			if asset and asset.is_fresh(self):
 				return asset
 			elif callback:
-				asset = callback(path)
+				asset = callback()
 
 				if asset:
 					asset_hash = {}

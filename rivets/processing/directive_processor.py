@@ -19,7 +19,7 @@ class DirectiveProcessor(Template):
 		matches = self.HEADER_PATTERN.search(self.data)
 		self.header = matches.group(0) if matches else ''
 		self.body = self.HEADER_PATTERN.sub('',self.data)
-
+		
 		if not self.body.endswith('\n'):
 			self.body += '\n'
 
@@ -49,7 +49,7 @@ class DirectiveProcessor(Template):
 			
 			processed_header.append('\n' if match else line)
 			
-		return ''.join(processed_header).strip()
+		return ''.join(processed_header).rstrip('\n')
 
 
 	def process_source(self):

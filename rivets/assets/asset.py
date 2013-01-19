@@ -1,4 +1,4 @@
-from os import stat
+import os
 import re
 from ..errors import UnserializeError
 
@@ -38,7 +38,7 @@ class Asset(object):
 			self.logical_path = logical_path
 			self.pathname = pathname
 			self.content_type = environment.get_content_type_of(pathname)
-			statinfo = stat(pathname)
+			statinfo = environment.stat(pathname)
 			self.mtime = statinfo.st_mtime
 			self.size = statinfo.st_size
 			self.digest = environment.get_file_digest(pathname).hexdigest()
@@ -65,11 +65,20 @@ class Asset(object):
 	def to_string(self):
 		return self.source
 
+	def __str__(self):
+		return self.to_string()
+
+	def __iter__(self):
+		return self.to_list()
+
+	def to_list(self):
+		return [self]
+
 	def equals(self,other):
 		class_match = other.__class__ == self.__class__ 
-		path_match = other.logical_path == self.logical_path
+		path_match = os.path.realpath(other.logical_path) == os.path.realpath(self.logical_path)
 		time_match = other.mtime == self.mtime
-		digest_match = other.digest = self.digest
+		digest_match = other.digest == self.digest
 
 		return class_match and path_match and time_match and digest_match
 
@@ -101,7 +110,7 @@ class Asset(object):
 	def is_dependency_fresh(self,environment,dep):
 		path,mtime,hexdigest = dep.pathname, dep.mtime,dep.digest
 
-		stat = environment.stat(self.pathname)
+		stat = environment.stat(path)
 
 		if not stat:
 			return False

@@ -101,7 +101,7 @@ class ProcessedAsset(Asset):
 					cache[self] = True
 					assets.append(self)
 			else:
-				asset = environment.find_asset(path, {"bundle":False})
+				asset = environment.find_asset(path, bundle=False)
 				if asset:
 					for asset_dependency in asset.required_assets:
 						if not cache.has_key(asset_dependency) or not cache[asset_dependency]:
@@ -122,7 +122,7 @@ class ProcessedAsset(Asset):
 				dep = DependencyFile(self.pathname, stat(path).st_mtime, environment.get_file_digest(path).hexdigest())
 				dependency_paths[dep] = True
 			else:
-				asset = environment.find_asset(path, {'bundle': False})
+				asset = environment.find_asset(path,bundle= False)
 				if asset:
 					for dep in asset.dependency_paths:
 						dependency_paths[dep] = True

@@ -9,3 +9,6 @@ class ContentTypeMismatch(Exception):
 
 class UnserializeError(Exception):
 	pass
+
+class FileNotFound(Exception):
+	pass

@@ -8,7 +8,7 @@ class BundledAsset(Asset):
 		if init:
 			super(BundledAsset,self).__init__(environment,logical_path,pathname)
 
-			self.processed_asset = environment.find_asset(pathname,{'bundle':False})
+			self.processed_asset = environment.find_asset(pathname,bundle=False)
 			self.required_assets = self.processed_asset.required_assets if self.processed_asset else []
 			self.dependency_paths = unique_list(self.processed_asset.dependency_paths) if self.processed_asset else []
 
@@ -18,9 +18,9 @@ class BundledAsset(Asset):
 				self.source += dependency.to_string()
 
 			context = environment.context_class(environment,logical_path,pathname)
-			self.source = context.evaluate(pathname,{'data':self.source,'processors':environment.processors.get_bundleprocessors(self.content_type)})
+			self.source = context.evaluate(pathname,data=self.source, processors=environment.processors.get_bundleprocessors(self.content_type))
 
-			self.mtime = max(set(self.to_list()) | set(self.dependency_paths),key=lambda x:x.mtime)
+			self.mtime = max(set(self.to_list()) | set(self.dependency_paths),key=lambda x:x.mtime).mtime
 			self.length = len(self.source)
 			digest = environment.get_digest()
 			digest.update(self.source.encode('utf8'))
@@ -29,7 +29,7 @@ class BundledAsset(Asset):
 	def init_with(self,environment,coder):
 		super(BundledAsset,self).init_with(environment,coder)
 
-		self.processed_asset = environment.find_asset(self.pathname,{'bundle':False})
+		self.processed_asset = environment.find_asset(self.pathname,bundle=False)
 		self.required_assets = self.processed_asset.required_assets
 
 		if self.processed_asset.dependency_digest != coder['required_assets_digest']:
