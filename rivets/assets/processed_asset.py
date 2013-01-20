@@ -1,6 +1,6 @@
 from asset import Asset
 from os import stat
-import re
+import regex as re
 
 from ..errors import UnserializeError
 from ..utils import unique_list

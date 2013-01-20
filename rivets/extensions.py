@@ -1,4 +1,4 @@
-import re
+import regex as re
 from os import path
 
 def normalize_extension(ext):

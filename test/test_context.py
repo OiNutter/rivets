@@ -1,7 +1,7 @@
 import sys
 sys.path.insert(0,'../')
 import unittest
-import re
+import regex as re
 import json
 
 from rivets_test import RivetsTest

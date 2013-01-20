@@ -1,5 +1,5 @@
 import os
-import re
+import regex as re
 from ..errors import UnserializeError
 
 class Asset(object):
