@@ -39,19 +39,19 @@ class ProcessorRegistry:
 		ProcessorRegistry.processors[position][mimetype].append(processor)
 
 	@staticmethod
-	def unregister_preprocessors(mimetype,processor):
-		return ProcessorRegistry.unregister_processors('pre',mimetype,processor)
+	def unregister_preprocessor(mimetype,processor):
+		return ProcessorRegistry.unregister_processor('pre',mimetype,processor)
 
 	@staticmethod
-	def unregister_postprocessors(mimetype,processor):
-		return ProcessorRegistry.unregister_processors('post',mimetype,processor)
+	def unregister_postprocessor(mimetype,processor):
+		return ProcessorRegistry.unregister_processor('post',mimetype,processor)
 
 	@staticmethod
-	def unregister_bundleprocessors(mimetype,processor):
-		return ProcessorRegistry.unregister_processors('bundle',mimetype,processor)
+	def unregister_bundleprocessor(mimetype,processor):
+		return ProcessorRegistry.unregister_processor('bundle',mimetype,processor)
 
 	@staticmethod
-	def unregister_processors(position,mimetype,processor):
+	def unregister_processor(position,mimetype,processor):
 		if ProcessorRegistry.processors[position].has_key(mimetype):
 			ProcessorRegistry.processors[position][mimetype].remove(processor)
 
