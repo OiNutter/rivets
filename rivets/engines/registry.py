@@ -1,26 +1,20 @@
 from ..extensions import normalize_extension
-from ..utils import unique_list
 
 class EngineRegistry:
 
 	engines = {}
 
-	@staticmethod
-	def register_engine(extension,engine):
+	def register_engine(self,extension,engine):
 
 		ext = normalize_extension(extension)
 
-		if not EngineRegistry.engines.has_key(ext):
-			EngineRegistry.engines[ext] = []	
-		
-		EngineRegistry.engines[ext].append(engine)
+		self.engines[ext] = engine
 
-	@staticmethod
-	def get_engine(extension):
+	def get_engine(self,extension):
 		
 		ext = normalize_extension(extension)
 
-		if EngineRegistry.engines.has_key(ext):
-			return unique_list(EngineRegistry.engines[ext])
+		if self.engines.has_key(ext):
+			return self.engines[ext]
 		else:
-			return []
+			return None

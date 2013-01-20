@@ -2,22 +2,18 @@ class MimeTypeRegistry:
 
 	mimetypes = {}
 
-	@staticmethod
-	def register_mimetype(extension,mimetype):
+	def register_mimetype(self,extension,mimetype):
+		self.mimetypes[extension] = mimetype.lower()
 
-		MimeTypeRegistry.mimetypes[extension] = mimetype.lower()
-
-	@staticmethod
-	def get_mimetype(extension):
+	def get_mimetype(self,extension):
 	
-		if MimeTypeRegistry.mimetypes.has_key(extension):
-			return MimeTypeRegistry.mimetypes[extension]
+		if self.mimetypes.has_key(extension):
+			return self.mimetypes[extension]
 		else:
 			return None
 
-	@staticmethod
-	def get_extension_for_mimetype(mime):
+	def get_extension_for_mimetype(self,mime):
 
-		for ext,mimetype in MimeTypeRegistry.mimetypes.iteritems():
+		for ext,mimetype in self.mimetypes.iteritems():
 			if mimetype.lower() == mime.lower():
 				return ext

@@ -9,24 +9,26 @@ from cssmin_compressor import CSSMinCompressor
 from slimit_compressor import SlimitCompressor
 from slimmer_compressors import SlimmerJSCompressor, SlimmerCSSCompressor
 
-ProcessorRegistry.register_preprocessor('application/javascript',DirectiveProcessor)
-ProcessorRegistry.register_preprocessor('text/css',DirectiveProcessor)
+processor_registry = ProcessorRegistry()
 
-ProcessorRegistry.register_postprocessor('application/javascript',SafetyColons)
+processor_registry.register_preprocessor('application/javascript',DirectiveProcessor)
+processor_registry.register_preprocessor('text/css',DirectiveProcessor)
 
-ProcessorRegistry.register_compressor('application/javascript','uglify',UglipyJSCompressor)
-ProcessorRegistry.register_compressor('application/javascript','uglipy',UglipyJSCompressor)
-ProcessorRegistry.register_compressor('application/javascript','uglipyjs',UglipyJSCompressor)
-ProcessorRegistry.register_compressor('application/javascript','uglifier',UglipyJSCompressor)
+processor_registry.register_postprocessor('application/javascript',SafetyColons)
 
-ProcessorRegistry.register_compressor('application/javascript','rjsmin',RJSMinCompressor)
+processor_registry.register_compressor('application/javascript','uglify',UglipyJSCompressor)
+processor_registry.register_compressor('application/javascript','uglipy',UglipyJSCompressor)
+processor_registry.register_compressor('application/javascript','uglipyjs',UglipyJSCompressor)
+processor_registry.register_compressor('application/javascript','uglifier',UglipyJSCompressor)
 
-ProcessorRegistry.register_compressor('application/javascript','slimit',SlimitCompressor)
+processor_registry.register_compressor('application/javascript','rjsmin',RJSMinCompressor)
 
-ProcessorRegistry.register_compressor('application/javascript','slimmer',SlimmerJSCompressor)
-ProcessorRegistry.register_compressor('application/javascript','slimmerjs',SlimmerJSCompressor)
+processor_registry.register_compressor('application/javascript','slimit',SlimitCompressor)
 
-ProcessorRegistry.register_compressor('text/css','cssmin',CSSMinCompressor)
+processor_registry.register_compressor('application/javascript','slimmer',SlimmerJSCompressor)
+processor_registry.register_compressor('application/javascript','slimmerjs',SlimmerJSCompressor)
 
-ProcessorRegistry.register_compressor('text/css','slimmer',SlimmerCSSCompressor)
-ProcessorRegistry.register_compressor('text/css','slimmercss',SlimmerCSSCompressor)
+processor_registry.register_compressor('text/css','cssmin',CSSMinCompressor)
+
+processor_registry.register_compressor('text/css','slimmer',SlimmerCSSCompressor)
+processor_registry.register_compressor('text/css','slimmercss',SlimmerCSSCompressor)

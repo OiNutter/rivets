@@ -14,88 +14,80 @@ class ProcessorRegistry:
 	js_compressor=None
 	css_compressor=None
 
-	@staticmethod
-	def register_preprocessor(mimetype,processor,callback=None):
-		ProcessorRegistry.register_processor('pre',mimetype,processor,callback)
+	def register_preprocessor(self,mimetype,processor,callback=None):
+		self.register_processor('pre',mimetype,processor,callback)
 
-	@staticmethod
-	def register_postprocessor(mimetype,processor,callback=None):
-		ProcessorRegistry.register_processor('post',mimetype,processor,callback)
+	def register_postprocessor(self,mimetype,processor,callback=None):
+		self.register_processor('post',mimetype,processor,callback)
 
-	@staticmethod
-	def register_bundleprocessor(mimetype,processor,callback=None):
-		ProcessorRegistry.register_processor('bundle',mimetype,processor,callback)
+	def register_bundleprocessor(self,mimetype,processor,callback=None):
+		self.register_processor('bundle',mimetype,processor,callback)
 
-	@staticmethod
-	def register_processor(position,mimetype,processor,callback=None):
+	def register_processor(self,position,mimetype,processor,callback=None):
 
 		if callback:
 			name = str(processor)
 			processor = type(name,(Processor,),{"processor":callback})
 
-		if not ProcessorRegistry.processors[position].has_key(mimetype):
-			ProcessorRegistry.processors[position][mimetype] = []
+		if not self.processors[position].has_key(mimetype):
+			self.processors[position][mimetype] = []
 
-		ProcessorRegistry.processors[position][mimetype].append(processor)
+		self.processors[position][mimetype].append(processor)
 
-	@staticmethod
-	def unregister_preprocessor(mimetype,processor):
-		return ProcessorRegistry.unregister_processor('pre',mimetype,processor)
+	def unregister_preprocessor(self,mimetype,processor):
+		return self.unregister_processor('pre',mimetype,processor)
 
-	@staticmethod
-	def unregister_postprocessor(mimetype,processor):
-		return ProcessorRegistry.unregister_processor('post',mimetype,processor)
+	def unregister_postprocessor(self,mimetype,processor):
+		return self.unregister_processor('post',mimetype,processor)
 
-	@staticmethod
-	def unregister_bundleprocessor(mimetype,processor):
-		return ProcessorRegistry.unregister_processor('bundle',mimetype,processor)
+	def unregister_bundleprocessor(self,mimetype,processor):
+		return self.unregister_processor('bundle',mimetype,processor)
 
-	@staticmethod
-	def unregister_processor(position,mimetype,processor):
-		if ProcessorRegistry.processors[position].has_key(mimetype):
-			ProcessorRegistry.processors[position][mimetype].remove(processor)
+	def unregister_processor(self,position,mimetype,processor):
+		if self.processors[position].has_key(mimetype):
+			self.processors[position][mimetype].remove(processor)
 
-	@staticmethod
-	def get_preprocessors(mimetype):
-		return ProcessorRegistry.get_processors('pre',mimetype)
+	def get_preprocessors(self,mimetype):
+		return self.get_processors('pre',mimetype)
 
-	@staticmethod
-	def get_postprocessors(mimetype):
-		return ProcessorRegistry.get_processors('post',mimetype)
+	def get_postprocessors(self,mimetype):
+		return self.get_processors('post',mimetype)
 
-	@staticmethod
-	def get_bundleprocessors(mimetype):
-		return ProcessorRegistry.get_processors('bundle',mimetype)
+	def get_bundleprocessors(self,mimetype):
+		return self.get_processors('bundle',mimetype)
 
-	@staticmethod
-	def get_processors(position,mimetype):
-		if ProcessorRegistry.processors[position].has_key(mimetype):
-			return ProcessorRegistry.processors[position][mimetype]
+	def get_processors(self,position,mimetype):
+		if self.processors[position].has_key(mimetype):
+			return self.processors[position][mimetype]
 		else:
 			return []
 
-
-
-	@staticmethod
-	def register_compressor(mimetype,name,processor):
+	def register_compressor(self,mimetype,name,processor):
 		
-		if not ProcessorRegistry.compressors.has_key(mimetype):
-			ProcessorRegistry.compressors[mimetype] = {}
+		if not self.compressors.has_key(mimetype):
+			self.compressors[mimetype] = {}
 
-		ProcessorRegistry.compressors[mimetype][name] = processor
+		self.compressors[mimetype][name] = processor
 
-	@staticmethod
-	def get_compressors(mimetype):
-		return ProcessorRegistry.compressors[mimetype] if ProcessorRegistry.compressors.has_key(mimetype) else []
+	def get_compressors(self,mimetype):
+		return self.compressors[mimetype] if self.compressors.has_key(mimetype) else []
 
-	@staticmethod
-	def get_js_compressor():
-		return ProcessorRegistry.js_compressor
+	def get_js_compressor(self):
+		return self.js_compressor
 
-	@staticmethod
-	def set_js_compressor(processor):
-		ProcessorRegistry.unregister_bundleprocessor('application/javascript',ProcessorRegistry.js_compressor)
+	def set_js_compressor(self,processor):
+		self.unregister_bundleprocessor('application/javascript',self.js_compressor)
 
-		ProcessorRegistry.js_compressor = processor
+		self.js_compressor = processor
 
-		ProcessorRegistry.register_bundleprocessor('application/javascript',processor)
+		self.register_bundleprocessor('application/javascript',processor)
+
+	def get_css_compressor(self):
+		return self.css_compressor
+
+	def set_css_compressor(self,processor):
+		self.unregister_bundleprocessor('text/css',self.css_compressor)
+
+		self.css_compressor = processor
+
+		self.register_bundleprocessor('text/css',processor)

@@ -1,11 +1,13 @@
+import copy
+
 from crawl import Crawl
 
 from base import Base
 from context import Context
 from index import Index
-from mimetypes import MimeTypeRegistry
-from engines import EngineRegistry
-from processing import ProcessorRegistry
+from mimetypes import mimetype_registry
+from engines import engine_registry
+from processing import processor_registry
 
 
 class Environment(Base):
@@ -16,9 +18,9 @@ class Environment(Base):
 		self.version = ''
 		self.cache = None
 
-		self.engines = EngineRegistry
-		self.mimetypes = MimeTypeRegistry
-		self.processors = ProcessorRegistry
+		self.engines = copy.deepcopy(engine_registry)
+		self.mimetypes = copy.deepcopy(mimetype_registry)
+		self.processors = copy.deepcopy(processor_registry)
 
 		self.context_class = Context
 

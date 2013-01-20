@@ -1,4 +1,6 @@
 from registry import MimeTypeRegistry
 
-MimeTypeRegistry.register_mimetype('.js','application/javascript')
-MimeTypeRegistry.register_mimetype('.css','text/css')
+mimetype_registry = MimeTypeRegistry()
+
+mimetype_registry.register_mimetype('.js','application/javascript')
+mimetype_registry.register_mimetype('.css','text/css')
