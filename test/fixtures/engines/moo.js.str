@@ -1,1 +1,1 @@
-console.log("Moo, #{RUBY_VERSION}");
+console.log("Moo, {VERSION}");
