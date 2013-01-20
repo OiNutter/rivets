@@ -7,7 +7,7 @@ class RivetsTest(unittest.TestCase):
 	FIXTURE_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__),'fixtures'))
 
 	def fixture(self,path):
-		return open(path).read()
+		return open(self.fixture_path(path)).read()
 
 	def fixture_path(self,path):
 		if path == self.FIXTURE_ROOT:
