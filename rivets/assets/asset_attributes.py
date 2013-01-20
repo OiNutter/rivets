@@ -70,7 +70,7 @@ class AssetAttributes:
 		engine_extensions = self.get_engine_extensions()
 		engines = []
 		for ext in engine_extensions:
-			engines.extend(self.environment.engines.get_engine(ext))
+			engines.append(self.environment.engines.get_engine(ext))
 		return engines
 
 	def get_engine_content_type(self):
@@ -89,7 +89,6 @@ class AssetAttributes:
 
 	def get_processors(self):
 		content_type = self.get_content_type()
-		ext = self.get_asset_extension()
 
 		processors = []
 
@@ -97,7 +96,7 @@ class AssetAttributes:
 		preprocessors.reverse()
 		processors.extend(preprocessors)
 
-		engines = self.environment.engines.get_engine(ext)
+		engines = self.get_engines()
 		engines.reverse()
 		processors.extend(engines)
 
@@ -118,7 +117,7 @@ class AssetAttributes:
 		extensions.reverse()
 
 		for ext in extensions:
-			if self.environment.mimetypes.get_mimetype(ext) and self.environment.engines.get_engine(ext) == []:
+			if self.environment.mimetypes.get_mimetype(ext) and not self.environment.engines.get_engine(ext):
 				return ext
 
 		return None
