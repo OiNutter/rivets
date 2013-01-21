@@ -1,6 +1,8 @@
 Rivets
 ======
 
+[![Build Status](https://travis-ci.org/OiNutter/rivets.png?branch=master)](undefined)
+
 Rivets is a port of [Sprockets](https://github.com/sstephenson/sprockets) to Python. 
 At the moment it just has the core functionality, and is probably closer to Sprockets 1.0 than to the
 current advanced features 
