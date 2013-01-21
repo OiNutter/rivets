@@ -7,5 +7,5 @@ install:
   - "pip install coffeescript"
   - "pip install pyscss"
   - "pip install mako"
-  - "pip install yaml"
+  - "pip install pyyaml"
 script: nosetests
