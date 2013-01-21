@@ -10,7 +10,7 @@ class Index(Base):
 		self.context_class = environment.context_class
 		self.cache = environment.cache
 		self.search_path = environment.search_path.index()
-		self.digest = environment.digest
+		self._digest = environment.digest
 		self.version = environment.version
 		self.mimetypes = environment.mimetypes
 		self.engines = environment.engines
@@ -19,6 +19,7 @@ class Index(Base):
 		self.assets = {}
 		self.digests = {}
 
+	@property
 	def index(self):
 		return self
 

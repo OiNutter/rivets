@@ -22,7 +22,7 @@ class TestCaching(RivetsTest):
 
 	def test_environmentDigests(self):
 		''' Test environment digests are the same for different roots '''
-		self.assertEqual(self.env1.get_digest().hexdigest(),self.env2.get_digest().hexdigest())
+		self.assertEqual(self.env1.digest.hexdigest(),self.env2.digest.hexdigest())
 
 	def test_environmentCacheObjects(self):
 		''' Test same environment instance cache objects are equal '''
@@ -39,7 +39,7 @@ class TestCaching(RivetsTest):
 
 	def test_indexCacheObjects(self):
 		''' Test same index instance cache objects are equal'''
-		index = self.env1.index()
+		index = self.env1.index
 
 		asset1 = index['gallery.js']
 		asset2 = index['gallery.js']
@@ -66,7 +66,7 @@ class TestCaching(RivetsTest):
 	def test_indexPathCacing(self):
 		''' Test same index instance is cached at logical and expanded path '''
 
-		index = self.env1.index()
+		index = self.env1.index
 
 		asset1 = index['gallery.js']
 		asset2 = index[asset1.pathname]
@@ -120,7 +120,7 @@ class TestCaching(RivetsTest):
 	def testProcessedAndBundledAssetsCachedSeperatelyOnIndex(self):
 		''' Test processed and bundled assets are cached separately on index'''
 
-		index = self.env1.index()
+		index = self.env1.index
 
 		self.assertIsInstance(index.find_asset('gallery.js',bundle=False),rivets.assets.ProcessedAsset)
 		self.assertIsInstance(index.find_asset('gallery.js',bundle=True),rivets.assets.BundledAsset)

@@ -8,7 +8,7 @@ class Context(object):
 
 	def __init__(self,environment,logical_path,pathname):
 		self.environment = environment
-		self.logical_path = logical_path
+		self._logical_path = logical_path
 		self.pathname = pathname
 		self.line = None
 		self.object_id = id(self)
@@ -18,16 +18,19 @@ class Context(object):
 		self.dependency_paths = []
 		self.dependency_assets = [pathname]
 
-	def get_root_path(self):
-		for path in self.environment.paths():
+	@property
+	def root_path(self):
+		for path in self.environment.paths:
 			if re.search(re.escape(path),self.pathname):
 				return path
 		return ""
 
-	def get_logical_path(self):
-		filename,extname = os.path.splitext(self.logical_path)
-		return re.sub(r"""%s$"""%extname,'',self.logical_path)
+	@property
+	def logical_path(self):
+		filename,extname = os.path.splitext(self._logical_path)
+		return re.sub(r"""%s$"""%extname,'',self._logical_path)
 
+	@property
 	def content_type(self):
 		return self.environment.get_content_type_of(self.pathname)
 
@@ -35,7 +38,7 @@ class Context(object):
 	
 		pathname = self.resolve(path)
 		attributes = self.environment.get_attributes_for(pathname)
-		processors = options['processors'] if options.has_key('processors') else attributes.get_processors()
+		processors = options['processors'] if options.has_key('processors') else attributes.processors
 
 		if options.has_key('data'):
 			result = options['data']
@@ -66,14 +69,14 @@ class Context(object):
 				raise FileNotFound("Couldn't find file %s" % path)
 
 		elif options.has_key('content_type') and options['content_type']:
-			content_type = self.content_type() if options['content_type'] == 'self' else options['content_type']
-			if attributes.get_format_extension():
-				attr_content_type = attributes.get_content_type() 
+			content_type = self.content_type if options['content_type'] == 'self' else options['content_type']
+			if attributes.format_extension:
+				attr_content_type = attributes.content_type
 				if content_type != attr_content_type:
 					raise ContentTypeMismatch("%s is '%s', not '%s'"%(path,attr_content_type,content_type))
 
 			def return_candidate(candidate):
-				if self.content_type() == self.environment.get_content_type_of(candidate):
+				if self.content_type == self.environment.get_content_type_of(candidate):
 					return candidate
 			
 			asset = self.resolve(path,callback=return_candidate)
@@ -108,7 +111,7 @@ class Context(object):
 		content_type = self.environment.get_content_type_of(pathname)
 		requirable = False
 		if os.path.exists(pathname) and os.path.isfile(pathname):
-			if self.content_type() and content_type == self.content_type():
+			if self.content_type and content_type == self.content_type:
 				requirable = True
 		
 		return requirable

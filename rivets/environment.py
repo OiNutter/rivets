@@ -13,7 +13,6 @@ from processing import processor_registry
 class Environment(Base):
 
 	def __init__(self,root="."):
-		self.root = root
 		self.search_path = Crawl(root)
 		self.version = ''
 		self.cache = None
@@ -30,6 +29,7 @@ class Environment(Base):
 		for ext,engine in self.engines.engines.iteritems():
 			self.add_engine_to_search_path(ext,engine)
 
+	@property
 	def index(self):
 		return Index(self)
 
@@ -46,12 +46,12 @@ class Environment(Base):
 		if asset and asset.is_fresh(self):
 			return asset
 		else:
-			asset = self.index().find_asset(path,**options)
+			asset = self.index.find_asset(path,**options)
 			if asset:
 				return asset
 
 		return None
 
 	def expire_index(self):
-		self.digest = None
+		self._digest = None
 		self.assets = {}

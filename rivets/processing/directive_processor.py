@@ -37,7 +37,8 @@ class DirectiveProcessor(Template):
 
 		return self.result
 
-	def get_processed_header(self):
+	@property
+	def processed_header(self):
 
 		processed_header = []
 
@@ -45,7 +46,7 @@ class DirectiveProcessor(Template):
 		for line in self.header.splitlines(True):
 			line_no += 1
 			match = False
-			for directive in self.directives():
+			for directive in self.directives:
 				if directive[0] == line_no:
 					match = True
 			
@@ -55,16 +56,17 @@ class DirectiveProcessor(Template):
 
 		return header + '\n' if header != "" else ""
 
-	def get_processed_source(self):
-		if not hasattr(self,'processed_source'):
-			self.processed_source = self.get_processed_header() + self.body
+	@property
+	def processed_source(self):
+		if not hasattr(self,'_processed_source'):
+			self._processed_source = self.processed_header + self.body
 
-		return str(self.processed_source)
+		return str(self._processed_source)
 
 
 	def process_source(self):
 
-		processed_header = self.get_processed_header()
+		processed_header = self.processed_header
 
 		if processed_header != "" and not self.has_written_body:
 			self.result += processed_header + "\n"
@@ -75,7 +77,7 @@ class DirectiveProcessor(Template):
 		if not self.has_written_body:
 			self.result += self.body
 
-
+	@property
 	def directives(self):
 	
 		directives = []
@@ -94,7 +96,7 @@ class DirectiveProcessor(Template):
 		return directives
 
 	def process_directives(self):
-		directives = self.directives()
+		directives = self.directives
 		for directive in directives:
 			self.context.line = directive[0]
 			getattr(self,'process_%s_directive'%directive[1])(directive[2])

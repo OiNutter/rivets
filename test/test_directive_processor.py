@@ -26,10 +26,10 @@ class TestDirectiveProcessor(RivetsTest):
 
 		self.assertEqual(
 			"// Header\n//\n\n\n//\n\n(function() {\n})();\n",
-			parser.get_processed_source()
+			parser.processed_source
 		)
 
-		self.assertEqual(self.directives(),parser.directives())
+		self.assertEqual(self.directives(),parser.directives)
 
 	def testParsingHashComments(self):
 		''' Test parsing hash comments '''
@@ -37,10 +37,10 @@ class TestDirectiveProcessor(RivetsTest):
 
 		self.assertEqual(
 			"# Header\n#\n\n\n#\n\n(->)()\n",
-			parser.get_processed_source()
+			parser.processed_source
 		)
 
-		self.assertEqual(self.directives(),parser.directives())
+		self.assertEqual(self.directives(),parser.directives)
 
 	def testParsingSlashStarComments(self):
 		''' Test parsing slash-star comments '''
@@ -48,10 +48,10 @@ class TestDirectiveProcessor(RivetsTest):
 
 		self.assertEqual(
 			"/* Header\n *\n\n\n *\n\n */\n\n(function() {\n})();\n",
-			parser.get_processed_source()
+			parser.processed_source
 		)
 
-		self.assertEqual(self.directives(),parser.directives())
+		self.assertEqual(self.directives(),parser.directives)
 
 	def testParsingSingleLineSlashStarComments(self):
 		''' Test parsing single line slash-star comments '''
@@ -59,10 +59,10 @@ class TestDirectiveProcessor(RivetsTest):
 
 		self.assertEqual(
 			"\n(function() {\n})();\n",
-			parser.get_processed_source()
+			parser.processed_source
 		)
 
-		self.assertEqual([(1, "require", "a")],parser.directives())
+		self.assertEqual([(1, "require", "a")],parser.directives)
 
 	def testParsingTripleHashComments(self):
 		''' Test parsing triple-hash comments '''
@@ -70,10 +70,10 @@ class TestDirectiveProcessor(RivetsTest):
 
 		self.assertEqual(
 			"###\nHeader\n\n\n\n\n\n###\n\n(->)()\n",
-			parser.get_processed_source()
+			parser.processed_source
 		)
 
-		self.assertEqual(self.directives(1),parser.directives())
+		self.assertEqual(self.directives(1),parser.directives)
 
 	def testHeaderCommentWithoutDirectivesIsUnmodified(self):
 		''' Test header comment without directives is unmodified '''
@@ -81,9 +81,9 @@ class TestDirectiveProcessor(RivetsTest):
 
 		self.assertEqual(
 				"/*\n * Comment\n */\n\n(function() {\n})();\n",
-				parser.get_processed_source()
+				parser.processed_source
 			)
-		self.assertEqual([],parser.directives())
+		self.assertEqual([],parser.directives)
 
 
 	def testDirectivesInCommentAfterHeaderAreNotParsed(self):
@@ -92,7 +92,7 @@ class TestDirectiveProcessor(RivetsTest):
 
 		self.assertEqual(
 				"/*\n * Header\n\n */\n\n\n\n\n\n\n/* Not a directive */\n\n(function() {\n})();\n\n/*= require e */\n",
-				parser.get_processed_source()
+				parser.processed_source
 			)
 
 		self.assertEqual(
@@ -102,15 +102,15 @@ class TestDirectiveProcessor(RivetsTest):
 	        		(7, "require", "c"),
 	        		(9, "require", "d")
 				],
-				parser.directives()
+				parser.directives
 			)
 
 	def testHeadersMustOccurAtTheBeginningOfTheFile(self):
 		''' Test headers must occur at the beginning of the file '''
 		parser = self.directive_parser("code_before_comment")
 
-		self.assertEqual("",parser.get_processed_header())
-		self.assertEqual([],parser.directives())
+		self.assertEqual("",parser.processed_header)
+		self.assertEqual([],parser.directives)
 
 	def testNoHeader(self):
 		''' Test no header '''
@@ -118,9 +118,9 @@ class TestDirectiveProcessor(RivetsTest):
 
 		self.assertEqual(
 				self.directive_fixture("no_header"),
-				parser.get_processed_source()
+				parser.processed_source
 			)
-		self.assertEqual([],parser.directives())
+		self.assertEqual([],parser.directives)
 
 	def testDirectiveWordSplitting(self):
 		''' Test directive word splitting '''
@@ -135,15 +135,15 @@ class TestDirectiveProcessor(RivetsTest):
 	        		(4, "require", "two three"),
 	        		(6, "require", "seven")
 	        	],
-	        	parser.directives()
+	        	parser.directives
 			)
 
 	def testSpaceBetweenEqualsandDirectiveWord(self):
 		''' Test space between = and directive word '''
 		parser = self.directive_parser("space_between_directive_word")
 
-		self.assertEqual("var foo;\n",parser.get_processed_source())
-		self.assertEqual([(1,"require","foo")],parser.directives())
+		self.assertEqual("var foo;\n",parser.processed_source)
+		self.assertEqual([(1,"require","foo")],parser.directives)
 
 	def testDocumentationHeaders(self):
 		''' Test documentation headers '''
@@ -151,9 +151,9 @@ class TestDirectiveProcessor(RivetsTest):
 
 		self.assertEqual(
 				"\n//\n// = Foo\n//\n// == Examples\n//\n// Foo.bar()\n// => \"baz\"\nvar Foo;\n",
-				parser.get_processed_source()
+				parser.processed_source
 			)
-		self.assertEqual([(1,"require","project")],parser.directives())
+		self.assertEqual([(1,"require","project")],parser.directives)
 
 class CustomDirectiveProcessor(rivets.processing.DirectiveProcessor):
 

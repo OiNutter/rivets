@@ -34,7 +34,7 @@ class Asset(object):
 	
 	def __init__(self,environment,logical_path,pathname,init=True):
 		if init:
-			self.root = environment.get_root()
+			self.root = environment.root
 			self.logical_path = logical_path
 			self.pathname = pathname
 			self.content_type = environment.get_content_type_of(pathname)
@@ -45,7 +45,7 @@ class Asset(object):
 			self.relative_pathname = None
 
 	def init_with(self,environment,coder):
-		self.root = environment.get_root()
+		self.root = environment.root
 		self.logical_path = coder['logical_path']
 		self.content_type = coder['content_type']
 		self.digest = coder['digest']

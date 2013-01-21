@@ -15,7 +15,7 @@ class ProcessedAsset(Asset):
 
 			self.source = context.evaluate(pathname)
 			self.length = len(self.source)
-			digest = environment.get_digest()
+			digest = environment.digest
 			digest.update(self.source.encode('utf8'))
 			self.digest = digest.hexdigest()
 
@@ -131,7 +131,7 @@ class ProcessedAsset(Asset):
 
 	def compute_dependency_digest(self,environment):
 
-		digest = environment.get_digest()
+		digest = environment.digest
 		for asset in self.required_assets:
 			digest.update(asset.digest)
 

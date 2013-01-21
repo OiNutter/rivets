@@ -22,7 +22,7 @@ class BundledAsset(Asset):
 
 			self.mtime = max(set(self.to_list()) | set(self.dependency_paths),key=lambda x:x.mtime).mtime
 			self.length = len(self.source)
-			digest = environment.get_digest()
+			digest = environment.digest
 			digest.update(self.source.encode('utf8'))
 			self.digest = digest.hexdigest()
 

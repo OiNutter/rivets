@@ -89,7 +89,7 @@ class TestPerformance(RivetsTest):
 
 	def testIndexedSimpleFile(self):
 		''' Test indexed simple file '''
-		str(self.env.index()['gallery.js'])
+		str(self.env.index['gallery.js'])
 		self.assertNoRedundantStatCalls()
 
 	def testFileWithDeps(self):
@@ -99,7 +99,7 @@ class TestPerformance(RivetsTest):
 
 	def testIndexedFileWithDeps(self):
 		''' Test indexed file with deps '''
-		str(self.env.index()['mobile.js'])
+		str(self.env.index['mobile.js'])
 		self.assertNoRedundantStatCalls()
 
 	def testCheckingFreshness(self):
@@ -112,7 +112,7 @@ class TestPerformance(RivetsTest):
 
 	def testCheckingFreshnessFromIndex(self):
 		''' Test checking freshness from index '''
-		index = self.env.index()
+		index = self.env.index
 		asset = index["mobile.js"]
 		self.reset_stats()
 
@@ -140,10 +140,10 @@ class TestPerformance(RivetsTest):
 		env1.cache = {}
 		env2.cache = {}
 
-		env1.index()["mobile.js"]
+		env1.index["mobile.js"]
 		self.reset_stats()
 
-		env2.index()["mobile.js"]
+		env2.index["mobile.js"]
 		self.assertNoRedundantStatCalls()
 
 if __name__ == '__main__':

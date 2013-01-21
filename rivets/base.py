@@ -1,5 +1,4 @@
 import os
-import io
 from hashlib import md5
 import json
 
@@ -10,32 +9,35 @@ from errors import FileNotFound
 class Base(object):
 
 	default_encoding = 'utf8'
-	digest = None
+	_digest = None
 
-	def get_digest(self):
+	@property
+	def digest(self):
 
-		if not self.digest:
+		if not self._digest:
 			from version import VERSION
-			self.digest = md5()
-			self.digest.update(str(VERSION))
-			self.digest.update(str(self.version))
+			self._digest = md5()
+			self._digest.update(str(VERSION))
+			self._digest.update(str(self.version))
 
-		return self.digest.copy()
+		return self._digest.copy()
 
 	def get_file_digest(self,path):
 		if os.path.isfile(path):
-			digest = self.get_digest()
+			digest = self.digest
 			data = open(path).read()
 			data = data.replace('\t',' ')
 			digest.update(data)
 			return digest
 		elif os.path.isdir(path):
 			entries = self.search_path.entries(path)
-			return self.get_digest().update(','.join(entries).encode('utf8'))
+			return self.digest.update(','.join(entries).encode('utf8'))
 
-	def get_root(self):
+	@property
+	def root(self):
 		return self.search_path.root
 
+	@property
 	def paths(self):
 		return self.search_path.paths
 
@@ -106,6 +108,7 @@ class Base(object):
 			if format_ext:
 				self.search_path.alias_extension(extension, format_ext)
 
+	@property
 	def index(self):
 		raise NotImplementedError('Index Not Implemented in Base class')
 
@@ -119,7 +122,7 @@ class Base(object):
 		return AssetAttributes(self,path)
 
 	def get_content_type_of(self,path):
-		return self.get_attributes_for(path).get_content_type()
+		return self.get_attributes_for(path).content_type
 
 	def __getitem__(self,path):
 		return self.find_asset(path)
@@ -130,7 +133,7 @@ class Base(object):
 		if os.path.isabs(path):
 			if not self.stat(path):
 				return None
-			logical_path = self.get_attributes_for(path).get_logical_path()
+			logical_path = self.get_attributes_for(path).logical_path
 		else:
 			try:
 				path = self.resolve(logical_path)
@@ -138,7 +141,7 @@ class Base(object):
 				filename,extname = os.path.splitext(path)
 
 				if extname == "":
-					expanded_logical_path = self.get_attributes_for(path).get_logical_path()
+					expanded_logical_path = self.get_attributes_for(path).logical_path
 					newfile,newext = os.path.splitext(expanded_logical_path)
 					logical_path += newext
 			except FileNotFound:
@@ -151,7 +154,7 @@ class Base(object):
 		if not options.has_key('bundle'):
 			options["bundle"] = True
 
-		if self.get_attributes_for(path).get_processors():
+		if self.get_attributes_for(path).processors:
 
 			if not options['bundle']:
 				return ProcessedAsset(self,logical_path,path)
@@ -183,7 +186,7 @@ class Base(object):
 					else:
 						return callback(path)
 
-			args = self.get_attributes_for(logical_path).search_paths()
+			args = self.get_attributes_for(logical_path).search_paths
 			path = self.search_path.find(*args,**options)
 			asset = process_asset(path)
 		else:
@@ -243,17 +246,17 @@ class Base(object):
 
 	def expand_cache_key(self,key):
 		h = md5()
-		h.update(key.replace(self.get_root(),''))
+		h.update(key.replace(self.root,''))
 		return os.path.join('rivets',h.hexdigest())
 
 	def cache_get_hash(self,key):
 		asset_hash = self.cache_get(self.expand_cache_key(key))
-		if asset_hash and isinstance(asset_hash,dict) and self.get_digest().hexdigest() == asset_hash['_version']:
+		if asset_hash and isinstance(asset_hash,dict) and self.digest.hexdigest() == asset_hash['_version']:
 			return asset_hash
 
 		return None
 
 	def cache_set_hash(self,key,asset_hash):
-		asset_hash['_version'] = self.get_digest().hexdigest()
+		asset_hash['_version'] = self.digest.hexdigest()
 		self.cache_set(self.expand_cache_key(key),asset_hash)
 		return asset_hash
