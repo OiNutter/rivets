@@ -2,7 +2,7 @@ import sys
 sys.path.insert(0,'../')
 import unittest
 
-from lean.coffee import CoffeeScriptTemplate
+from lean._coffee import CoffeeScriptTemplate
 from rivets_test import RivetsTest
 import rivets
 
