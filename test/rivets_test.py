@@ -1,5 +1,11 @@
 import os
-import unittest
+import sys
+
+if sys.version_info[:2] == (2,6):
+	import unittest2 as unittest
+else:
+	import unittest
+
 import shutil
 
 class RivetsTest(unittest.TestCase):
@@ -45,16 +51,3 @@ class RivetsTest(unittest.TestCase):
 					os.remove(path) if os.path.isfile(path) else os.rmdir(path)
 
 				assert not os.path.exists(path)
-
-	def assertIsNone(self,val):
-		if hasattr(super(RivetsTest,self),'assertIsNone'):
-			super(RivetsTest,self).assertIsNone(val)
-		else:
-			self.assertEqual(None,val)
-
-
-	def assertIsInstance(self,val,klass):
-		if hasattr(super(RivetsTest,self),'assertIsInstance'):
-			super(RivetsTest,self).assertIsInstance(val,klass)
-		else:
-			assert isinstance(val,klass)

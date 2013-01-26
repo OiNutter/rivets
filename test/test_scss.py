@@ -1,6 +1,9 @@
 import sys
 sys.path.insert(0,'../')
-import unittest
+if sys.version_info[:2] == (2,6):
+	import unittest2 as unittest
+else:
+	import unittest
 import os
 import lean
 import shutil
