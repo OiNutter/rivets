@@ -27,21 +27,22 @@ class RivetsTest(unittest.TestCase):
 			else:
 				remove_paths.append(path)
 
-			return callback()
 		try:
 			for path in backup_paths:
-				shutil.copytree(path,"%s.orig"%path)
+				shutil.copy2(path,"%s.orig"%path) if os.path.isfile(path) else shutil.copytree(path)
+
+			return callback()
 
 		finally:
 			for path in backup_paths:
-				if os.path.exists(path):
+				if os.path.exists("%s.orig"%path):
 					shutil.move("%s.orig"%path,path)
 
 				assert not os.path.exists("%s.orig"%path)
 
 			for path in remove_paths:
 				if os.path.exists(path):
-					shutil.rmtree(path)
+					os.remove(path) if os.path.isfile(path) else os.rmdir(path)
 
 				assert not os.path.exists(path)
 

@@ -76,7 +76,7 @@ class Context(object):
 					raise ContentTypeMismatch("%s is '%s', not '%s'"%(path,attr_content_type,content_type))
 
 			def return_candidate(candidate):
-				if self.content_type == self.environment.get_content_type_of(candidate):
+ 				if self.content_type == self.environment.get_content_type_of(candidate):
 					return candidate
 			
 			asset = self.resolve(path,callback=return_candidate)

@@ -3,8 +3,6 @@ var Bar,
 
 Bar = (function() {
 
-  Bar.name = 'Bar';
-
   function Bar() {
     this.initialize = __bind(this.initialize, this);
 
@@ -21,8 +19,6 @@ var Foo,
   __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; };
 
 Foo = (function() {
-
-  Foo.name = 'Foo';
 
   function Foo() {
     this.initialize = __bind(this.initialize, this);

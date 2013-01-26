@@ -12,3 +12,6 @@ class UnserializeError(Exception):
 
 class FileNotFound(Exception):
 	pass
+
+class ArgumentError(Exception):
+	pass

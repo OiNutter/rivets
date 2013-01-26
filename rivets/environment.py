@@ -5,7 +5,7 @@ from crawl import Crawl
 from base import Base
 from context import Context
 from index import Index
-from mimetypes import mimetype_registry
+from mime import mimetype_registry
 from engines import engine_registry
 from processing import processor_registry
 

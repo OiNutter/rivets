@@ -42,7 +42,7 @@ class ProcessedAsset(Asset):
 			if not matched:
 				raise UnserializeError("%s isn't in paths" % p)
 
-			self.required_assets.append(self if p == self.pathname else environment.find_asset(p,{'bundle':False}))
+			self.required_assets.append(self if p == self.pathname else environment.find_asset(p,bundle = False))
 
 		self.dependency_paths = []
 
@@ -114,12 +114,14 @@ class ProcessedAsset(Asset):
 		dependency_paths = {}
 
 		for path in context.dependency_paths:
-			dep = DependencyFile(path, stat(path).st_mtime, environment.get_file_digest(path).hexdigest())
+			digest = environment.get_file_digest(path)
+			dep = DependencyFile(path, stat(path).st_mtime, digest.hexdigest())
 			dependency_paths[dep] = True
 
 		for path in unique_list(context.dependency_assets):
 			if path == str(self.pathname):
-				dep = DependencyFile(self.pathname, stat(path).st_mtime, environment.get_file_digest(path).hexdigest())
+				digest = environment.get_file_digest(path)
+				dep = DependencyFile(self.pathname, stat(path).st_mtime, digest.hexdigest())
 				dependency_paths[dep] = True
 			else:
 				asset = environment.find_asset(path,bundle= False)

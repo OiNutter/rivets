@@ -45,10 +45,12 @@ class BundledAsset(Asset):
 
 		return coder
 
+	@property
 	def body(self):
 		return self.processed_asset.source
 
-	def get_dependencies(self):
+	@property
+	def dependencies(self):
 		return [a for a in self.to_list() if not a.equals(self.processed_asset)]
 
 	def to_list(self):

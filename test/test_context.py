@@ -154,7 +154,6 @@ class TestCustomProcessor(RivetsTest):
 
 	def testResolveWithContentType(self):
 		''' Test resolve with content type '''
-		print str(self.env['resolve_content_type.js']).strip()
 		self.assertEqual(
 				',\n'.join([
 					self.fixture_path("context/foo.js"),

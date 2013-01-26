@@ -1,6 +1,8 @@
 import os
+import re
 from hashlib import md5
 import json
+import copy
 
 from assets import Asset, AssetAttributes, BundledAsset, ProcessedAsset, StaticAsset
 from errors import FileNotFound
@@ -23,23 +25,26 @@ class Base(object):
 		return self._digest.copy()
 
 	def get_file_digest(self,path):
+		digest = self.digest
 		if os.path.isfile(path):
-			digest = self.digest
 			data = open(path).read()
-			data = data.replace('\t',' ')
 			digest.update(data)
-			return digest
 		elif os.path.isdir(path):
 			entries = self.search_path.entries(path)
-			return self.digest.update(','.join(entries).encode('utf8'))
+			digest.update(','.join(entries).encode('utf8'))
+		return digest
 
 	@property
 	def root(self):
-		return self.search_path.root
+		return copy.deepcopy(self.search_path.root)
 
 	@property
 	def paths(self):
-		return self.search_path.paths
+		return copy.deepcopy(self.search_path.paths)
+
+	@property
+	def extensions(self):
+		return copy.deepcopy(self.search_path.extensions)
 
 	def prepend_path(self,*paths):
 		self.prepend_paths(*paths)
@@ -57,7 +62,7 @@ class Base(object):
 
 	def clear_paths(self):
 		self.expire_index()
-		for path in self.search_path.paths:
+		for path in copy.deepcopy(self.search_path.paths):
 			self.search_path.paths.remove_path(path)
 
 	def register_mimetype(self,extension,mimetype):
@@ -161,34 +166,39 @@ class Base(object):
 			else:
 				return BundledAsset(self,logical_path,path)
 		else:
-			return StaticAsset()
+			return StaticAsset(self,logical_path,path)
 
 	def resolve(self,logical_path,**options):
 
 		if options.has_key('callback') and options['callback']:
 			callback = options.pop('callback')
-			def process_asset(path):
-				if path:
-					if os.path.basename(path)=='component.json':
-						component = json.loads(open(path).read())
+			def process_asset(paths):
+				if paths:
+					for path in paths:
+						if os.path.basename(path)=='component.json':
+							component = json.loads(open(path).read())
 
-						if component.has_key('main'):
-							if isinstance(component['main'],str):
-								return options['callback'](os.path.join(os.path.dirname(path),component['main']))
-							elif isinstance(component['main'],list):
-								filename,ext = os.path.splitext(logical_path)
+							if component.has_key('main'):
+								if isinstance(component['main'],str):
+									return options['callback'](os.path.join(os.path.dirname(path),component['main']))
+								elif isinstance(component['main'],list):
+									filename,ext = os.path.splitext(logical_path)
 
-								for fn in component['main']:
-									fn_name,fn_ext = os.path.splitext(fn)
-									if ext == "" or ext == fn_ext:
-										return callback(os.path.join(os.path.dirname(path),fn))
+									for fn in component['main']:
+										fn_name,fn_ext = os.path.splitext(fn)
+										if ext == "" or ext == fn_ext:
+											asset = callback(os.path.join(os.path.dirname(path),fn))
+											if asset:
+												return asset
 
-					else:
-						return callback(path)
+						else:
+							asset = callback(path)
+							if asset:
+								return asset
 
 			args = self.get_attributes_for(logical_path).search_paths
-			path = self.search_path.find(*args,**options)
-			asset = process_asset(path)
+			asset = self.search_path.find(callback=process_asset,*args,**options)
+			
 		else:
 			options['callback'] = lambda x: x
 			asset = self.resolve(logical_path,**options)
@@ -200,6 +210,91 @@ class Base(object):
 		
 		asset = self.find_asset(path)
 		return asset.to_string()
+
+	def each_entry(self,root,callback=None):
+
+		if not callback:
+			return 
+			
+		paths = []
+		for filename in sorted(self.entries(root)):
+			path = os.path.join(root,filename)
+			paths.append(path)
+
+			if os.path.isdir(path):
+				self.each_entry(path,callback= lambda x:paths.append(x))
+
+		for path in sorted(paths):
+			callback(path)
+
+	def each_file(self,callback=None):
+
+		if not callback:
+			return
+
+		for root in self.paths:
+			def do(path):
+				if os.path.isdir(path):
+					callback(path)
+
+			self.each_entry(root,callback=do)
+
+	def each_logical_path(self,callback=None,*args):
+
+		if not callback:
+			return
+
+		filters = [item for sublist in args for item in sublist]
+		files = {}
+
+		def do(filename):
+			logical_path = self.logical_path_for_fullname(filename,filters)
+			if logical_path:
+				if not files.has_key(logical_path):
+					callback(logical_path,filename)
+
+				files[logical_path] = True
+
+		self.each_file(callback=do)
+
+	def logical_path_for_fullname(self,filename,filters):
+		logical_path = self.get_attributes_for(filename).logical_path
+
+		if self.matches_filter(filters,logical_path,filename):
+			return logical_path
+
+		pieces = re.split(r"""[^\.]+""",os.path.basename(logical_path))
+		if pieces[0] == 'index':
+			path = re.replace(r"""\/index\.""",".",logical_path)
+			if self.matches_filter(filters,path,filename):
+				return path
+
+
+		return None
+
+	def matches_filter(self,filters,logical_path,filename):
+		if filters == []:
+			return True
+
+		match = False
+		for filter in filters:
+			if isinstance(filter,re.RegexObject):
+				if filter.search(logical_path):
+					match = True
+					break
+
+			elif hasattr(filter,'__call__'):
+				if filter.__call__(logical_path,filename):
+					match = True
+					break
+
+			else:
+				import fnmatch
+				if fnmatch.fnmatch(str(filter),logical_path):
+					match = True
+					break
+
+		return match
 
 	###########
 	# Caching #
