@@ -39,7 +39,7 @@ class Asset(object):
 			self.pathname = pathname
 			self.content_type = environment.get_content_type_of(pathname)
 			statinfo = environment.stat(pathname)
-			self.mtime = statinfo.st_mtime
+			self.mtime = int(statinfo.st_mtime)
 			self.length = statinfo.st_size
 			self.digest = environment.get_file_digest(pathname).hexdigest()
 			self.relative_pathname = None
@@ -151,15 +151,13 @@ class Asset(object):
 
 		stat = environment.stat(path)
 
-		print '-----------------------'
-		print path
-		print stat
-		print '-----------------------'
-
 		if not stat:
 			return False
 
-		if mtime >= stat.st_mtime:
+		print mtime
+		print stat.st_mtime
+
+		if int(mtime) >= int(stat.st_mtime):
 			return True
 
 		digest = environment.get_file_digest(self.pathname)

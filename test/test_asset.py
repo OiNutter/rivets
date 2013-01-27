@@ -6,6 +6,7 @@ else:
 	import unittest
 import os
 import time,datetime
+import regex as re
 
 from rivets_test import RivetsTest
 import rivets
@@ -393,7 +394,7 @@ class FreshnessTests(object):
 			f.write('z')
 			f.close()
 
-			new_time = time.mktime((datetime.datetime.now()+datetime.timedelta(seconds=1)).timetuple())
+			new_time = int(time.mktime((datetime.datetime.now()+datetime.timedelta(seconds=1)).timetuple()))
 			os.utime(filename,(new_time,new_time))
 
 			assert asset.is_stale(self.env)
@@ -651,6 +652,289 @@ class ProcessedAssetTest(RivetsTest,AssetTests,FreshnessTests):
 		assert actual.equals(expected) 
 		assert expected.equals(actual)
 
+
+class BundledAssetTest(RivetsTest,AssetTests,FreshnessTests):
+
+	def setUp(self):
+		self.env = rivets.Environment()
+		self.env.append_path(self.fixture_path('asset'))
+		self.env.cache = {}
+
+		self.asset = self.env['application.js']
+		self.bundle = True
+
+	def get_asset(self,logical_path):
+		return self.env.find_asset(logical_path,bundle=self.bundle)
+
+	def resolve(self,logical_path):
+		return self.env.resolve(logical_path)
+
+	def read(self,logical_path):
+		return open(self.resolve(logical_path)).read()
+
+	def testLogicalPathCanFindItself(self):
+		''' Test logical path can find itself '''
+		self.assertEqual(self.asset,self.env[self.asset.logical_path])
+
+	def testClass(self):
+		''' Test class '''
+		self.assertIsInstance(self.asset,rivets.assets.BundledAsset)
+
+	def testContentType(self):
+		''' Test content type '''
+		self.assertEqual('application/javascript',self.asset.content_type)
+
+	def testLength(self):
+		''' Test length '''
+		self.assertEqual(156,self.asset.length)
+
+	def testToString(self):
+		''' Test to_string '''
+		self.assertEqual(
+				"var Project = {\n  find: function(id) {\n  }\n};\nvar Users = {\n  find: function(id) {\n  }\n};\ndocument.on('dom:loaded', function() {\n  $('search').focus();\n});\n",
+				str(self.asset)
+			)
+
+	def testMTimeBasedOnRequiredAssets(self):
+		''' Test mtime is based on required assets '''
+		required_asset = self.fixture_path('asset/dependencies/b.js')
+
+		def do_test():
+			new_time = time.mktime((datetime.datetime.now()+datetime.timedelta(seconds=1)).timetuple())
+			os.utime(required_asset,(new_time,new_time))
+			self.assertEqual(int(new_time),int(self.get_asset('required_assets.js').mtime))
+
+		self.sandbox(required_asset,callback=do_test)
+
+	def testMTimeBasedOnDependencyPaths(self):
+		''' Test mtime is based on dependency paths '''
+		asset_dependency = self.fixture_path('asset/dependencies/b.js')
+
+		def do_test():
+			new_time = time.mktime((datetime.datetime.now()+datetime.timedelta(seconds=1)).timetuple())
+			os.utime(asset_dependency,(new_time,new_time))
+			self.assertEqual(int(new_time),int(self.get_asset('dependency_paths.js').mtime))
+
+		self.sandbox(asset_dependency,callback=do_test)
+
+	def testRequiringTheSameFileMultipleTimesHasNoEffect(self):
+		''' Test requiring the same file multiple times has no effect '''
+
+		self.assertEqual(
+				self.read('project.js') + "\n",
+				str(self.get_asset('multiple.js'))
+			)
+
+	def testRequiringAFileOfADifferentFormatRaisesAnException(self):
+		''' Test requiring a file of a different format raises an exception '''
+		self.assertRaises(
+				rivets.errors.ContentTypeMismatch,
+				self.get_asset,
+				'mismatch.js'
+			)
+
+	def testSplattedAssetIncludesItself(self):
+		''' Test splatted asset includes itself '''
+		self.assertEqual(
+				[self.resolve('project.js')],
+				[asset.pathname for asset in self.get_asset('project.js').to_list()]
+			)
+
+	def testSplatterAssetsAreProcessedAssets(self):
+		''' Test splatted assets are processed assets '''
+
+		for asset in self.get_asset('project.js').to_list():
+			self.assertIsInstance(asset,rivets.assets.ProcessedAsset)
+
+	def testAssetDoesntIncludeSelfAsDependency(self):
+		''' Test asset doesn't include self as dependency '''
+
+		self.assertEqual([],self.get_asset('project.js').dependencies)
+
+	def testAssetWithChildDependencies(self):
+		''' Test asset with child dependencies '''
+
+		self.assertEqual(
+				[self.resolve('project.js'),self.resolve("users.js")],
+				[a.pathname for a in self.get_asset('application.js').dependencies]
+			)
+
+	def testSplattedAssetWithChildDependencies(self):
+		''' Test splatted asset with child dependencies '''
+
+		self.assertEqual(
+				[self.resolve('project.js'),self.resolve("users.js"),self.resolve('application.js')],
+				[a.pathname for a in self.get_asset('application.js').to_list()]
+			)
+
+	def testBundledAssetBodyIsJustItsOwnContents(self):
+		''' Test bundled asset body is just it's own contents '''
+
+		self.assertEqual(
+				"document.on('dom:loaded', function() {\n  $('search').focus();\n});\n",
+				self.get_asset('application.js').body
+			)
+
+	def testBundlingJoinsFilesWithBlankLine(self):
+		''' Test bundling joins files with blank line '''
+
+		self.assertEqual(
+				"var Project = {\n  find: function(id) {\n  }\n};\nvar Users = {\n  find: function(id) {\n  }\n};\ndocument.on('dom:loaded', function() {\n  $('search').focus();\n});\n",
+				str(self.get_asset('application.js'))
+			)
+
+	def testDependenciesAppearInTheSourceBeforeFilesThatRequiredThem(self):
+		''' Test dependencies appear in the source before files that required them '''
+
+		assert re.search(r"""Project.+Users.+focus""",str(self.get_asset('application.js')),re.M|re.S)
+
+	def testProcessingASourceFileWithNoEngineExtensions(self):
+		''' Test processing a source file with no engine extensions '''
+
+		self.assertEqual(
+				self.read('users.js'),
+				str(self.get_asset('noengine.js'))
+			)
+
+	def testProcessingASourceFileWithOneEngineExtension(self):
+		''' Test processing a source file with one engine extension '''
+
+		self.assertEqual(
+				self.read('users.js'),
+				str(self.get_asset('oneengine.js'))
+			)
+
+	def testProcessingASourceFileWithMultipleEngineExtension(self):
+		''' Test processing a source file with multiple engine extension '''
+
+		self.assertEqual(
+				self.read('users.js'),
+				str(self.get_asset('multipleengine.js'))
+			)
+
+	def testProcessingASourceFileWithUnknownExtensions(self):
+		''' Test processing a source file with unknown extensions '''
+		self.assertEqual(
+				self.read('users.js') + "var jQuery;\n",
+				str(self.get_asset('unknownexts.min.js'))
+			)
+
+	def testIncludedDependenciesAreInsertedAfterTheHeaderOfTheDependentFile(self):
+		''' Test included dependencies are inserted after the header of the dependent file '''
+
+		self.assertEqual(
+				"# My Application\n\n" + self.read("project.js") + "\n\nhello();\n",
+				str(self.get_asset('included_header.js'))
+			)
+
+	def testRequiringAFileWithARelativePath(self):
+		''' Test requiring a file with a relative path ''' 
+
+		self.assertEqual(
+				self.read('project.js') + "\n",
+				str(self.get_asset('relative/require.js'))
+			)
+
+	def testIncludingAFileWithARelativePath(self):
+		''' Test including a file with a relative path ''' 
+
+		self.assertEqual(
+				"// Included relatively\n\n" + self.read("project.js") + "\n\nhello();\n",
+				str(self.get_asset('relative/include.js'))
+			)
+
+	def testCantRequireFilesOutsideTheLoadPath(self):
+		''' Test can't require files outside the load path '''
+
+		self.assertRaises(
+				rivets.errors.FileNotFound,
+				self.get_asset,
+				"relative/require_outside_path.js"
+			)
+
+	def testCantRequireAbsoluteFilesOutsideTheLoadPath(self):
+		''' Test can't require absolute files outside the load path '''
+
+		self.assertRaises(
+				rivets.errors.FileOutsidePaths,
+				self.get_asset,
+				"absolute/require_outside_path.js"
+			)
+
+	def testRequireDirectoryRequiresAllChildFilesInAlphabeticalOrder(self):
+		''' Test require_directory requires all child files in alphabetical order '''
+
+		self.assertEqual(
+				'ok(\"b.js.mako\");\n',
+				str(self.get_asset('tree/all_with_require_directory.js'))
+			)
+
+	def testRequireDirectoryCurrentDirectoryIncludesSelfLast(self):
+		''' Test require_directory current directory includes self last '''
+
+		self.assertEqual(
+				"var Bar;\nvar Foo;\nvar App;\n",
+				str(self.get_asset("tree/directory/application.js"))
+			)
+
+	def testRequireTreeRequiresAllDescendantFilesInAlphabeticalOrder(self):
+		''' Test require_tree requires all descendant files in alphabetical order '''
+
+		self.assertEqual(
+				str(self.get_asset('tree/all_with_require.js')),
+				str(self.get_asset('tree/all_with_require_tree.js')),
+			)
+
+	def testRequireTreeWithoutAnArgumentDefaultsToCurrentDirectory(self):
+		''' Test require_tree without an argument defaults to the current directory '''
+
+		self.assertEqual(
+				"a();\nb();\n",
+				str(self.get_asset("tree/without_argument/require_tree_without_argument.js"))
+			)
+
+	def testRequireTreeWithCurrentDirectoryIncludesSelfLast(self):
+		''' Test require_tree current directory includes self last '''
+
+		self.assertEqual(
+				"var Bar;\nvar Foo;\nvar App;\n",
+				str(self.get_asset("tree/tree/application.js"))
+			)
+
+	def testRequireTreeWithALogicalPathArgumentRaisesAnException(self):
+		''' Test require_tree with a logical path argument raises an exception '''
+
+		self.assertRaises(
+				rivets.errors.ArgumentError,
+				self.get_asset,
+				'tree/with_logical_path/require_tree_with_logical_path.js'
+			)
+
+	def testRequireTreeWithNonexistantPathRaisesAnException(self):
+		''' Test require tree with a nonexistant path raises an exception '''
+
+		self.assertRaises(
+				rivets.errors.ArgumentError,
+				self.get_asset,
+				"tree/with_logical_path/require_tree_with_nonexistent_path.js"
+			)
+
+	def testRequireTreeWithNonexistantAbsolutePathRaisesAnException(self):
+		''' Test require_tree with a nonexistent absolute path raises an exception ''' 
+
+		self.assertRaises(
+				rivets.errors.ArgumentError,
+				self.get_asset,
+				"absolute/require_nonexistent_path.js"
+			)
+
+	def testRequireTreeRespectsOrderOfChildDependencies(self):
+		''' Test require tree respects order of child dependencies '''
+
+		self.assertEqual(
+				"var c;\nvar b;\nvar a;\n",
+				str(self.get_asset('tree/require_tree_alpha.js'))
+			)
 
 if __name__ == '__main__':
     unittest.main()

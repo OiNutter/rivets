@@ -126,7 +126,7 @@ class DirectiveProcessor(Template):
 		self.included_pathnames = []
 		self.has_written_body = True
 
-	def process_included_directive(self,path):
+	def process_include_directive(self,path):
 		pathname = self.context.resolve(path)
 		self.context.depend_on_asset(pathname)
 		self.included_pathnames.append(pathname)

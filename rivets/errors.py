@@ -13,5 +13,8 @@ class UnserializeError(Exception):
 class FileNotFound(Exception):
 	pass
 
+class FileOutsidePaths(Exception):
+	pass
+
 class ArgumentError(Exception):
 	pass

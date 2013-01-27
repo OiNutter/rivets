@@ -3,6 +3,7 @@ import os
 
 from ..extensions import get_extension
 from ..utils import unique_list
+from ..errors import FileOutsidePaths
 
 class AssetAttributes:
 
@@ -38,13 +39,18 @@ class AssetAttributes:
 				root_path = path
 				break
 
-		path = re.sub("%s/"%root_path,'',self.path)
-		path = os.path.relpath(self.path,root_path)
-		for ext in self.engine_extensions:
-			path = re.sub(ext,'',path)
+		if root_path != "":
 
-		path = "%s%s" % (path,self.engine_format_extension) if not self.format_extension else path
-		return path
+			path = re.sub("%s/"%root_path,'',self.path)
+			path = os.path.relpath(self.path,root_path)
+			for ext in self.engine_extensions:
+				path = re.sub(ext,'',path)
+
+			path = "%s%s" % (path,self.engine_format_extension) if not self.format_extension else path
+			return path
+
+		else:
+			raise FileOutsidePaths("%s isn't in paths: %s" % (self.path,', '.join(self.environment.paths)))
 
 	@property
 	def asset_extension(self):

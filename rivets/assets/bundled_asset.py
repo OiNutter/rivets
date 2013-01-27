@@ -47,7 +47,7 @@ class BundledAsset(Asset):
 
 	@property
 	def body(self):
-		return self.processed_asset.source
+		return str(self.processed_asset.source)
 
 	@property
 	def dependencies(self):

@@ -143,7 +143,7 @@ class DependencyFile:
 
 	def __init__(self,pathname, mtime, digest):
           self.pathname = pathname
-          self.mtime    = mtime
+          self.mtime    = int(mtime)
           self.digest = digest
 
 	def equals(self,other):
