@@ -1,8 +1,8 @@
 import os
 import regex as re
-import io
 
 from errors import ContentTypeMismatch,FileNotFound
+import utils
 
 class Context(object):
 
@@ -46,14 +46,15 @@ class Context(object):
 			if hasattr(self.environment,'default_encoding'):
 				filename,ext = os.path.splitext(pathname)
 				encoding = self.environment.default_encoding
-				result = io.open(pathname,encoding=encoding).read()
+				result = utils.read_unicode(pathname,encoding)
 			else:
-				result = io.open(pathname,encoding='UTF-8').read()
+				result = utils.read_unicode(pathname)
 
 		for processor in processors:
 			try:
 				template = processor(pathname,block=lambda x: result)
 				result = template.render(self,{})
+
 			except Exception,e:
 				self.annotate_exception(e)
 
@@ -104,7 +105,7 @@ class Context(object):
 			self.required_paths.append(pathname)
 
 	def stub_asset(self,path):
-		self.stubbed_assets.add(self.resolve(path,content_type ='self'))
+		self.stubbed_assets.append(self.resolve(path,content_type ='self'))
 
 	def is_asset_requirable(self,path):
 		pathname = self.resolve(path)

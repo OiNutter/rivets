@@ -18,3 +18,9 @@ class FileOutsidePaths(Exception):
 
 class ArgumentError(Exception):
 	pass
+
+class CircularDependencyError(Exception):
+	pass
+
+class EncodingError(Exception):
+	pass

@@ -1,11 +1,15 @@
-import io
+import codecs
+import re
 
-def read_unicode(filename):
-	data = io.open(filename).read()
-	data = unicode(data,'utf8')
-	data = data.replace('\t',' ')
+UTF8_BOM_PATTERN = re.compile("\\A(\\xFE\\xFF|\\xFF\\xFE)".encode('utf-8'))
 
-	return data
+def read_unicode(filename,external_encoding='utf8'):
+	data = codecs.open(filename,encoding=external_encoding).read()
+
+	if UTF8_BOM_PATTERN.match(data):
+		return UTF8_BOM_PATTERN.sub('',data)
+	else:
+		return data
 
 def unique_list(seq):
 	seen = set()

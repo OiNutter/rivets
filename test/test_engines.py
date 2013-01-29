@@ -56,7 +56,7 @@ class TestEngines(RivetsTest):
 		env = self.new_environment()
 		asset = env['hello.alert']
 
-		self.assertEqual('alert("Hello world!\n");\n',str(asset))
+		self.assertEqual('alert("Hello world!\n");',str(asset))
 		self.assertEqual('application/javascript',asset.content_type)
 
 	def testOverridingAnEngineGlobally(self):

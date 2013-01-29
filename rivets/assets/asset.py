@@ -59,7 +59,11 @@ class Asset(object):
 		
 	@property
 	def digest_path(self):
-		return re.sub(r"""\.(\w+)$""","%s\1"%self.digest,self.logical_path)
+
+		def do_replace(matchobj):
+				return "-%s%s" % (self.digest,matchobj.group(0))
+
+		return re.sub(r"""\.(\w+)$""",do_replace,self.logical_path)
 
 	@property
 	def body(self):
@@ -70,10 +74,13 @@ class Asset(object):
 		return self.digest.digest()
 
 	def to_string(self):
-		return str(self.source)
+		return self.source
 
 	def __str__(self):
-		return self.to_string()
+		return str(self.to_string())
+
+	def __unicode__(self):
+		return unicode(self.to_string())
 
 	def __iter__(self):
 		return self.to_list()

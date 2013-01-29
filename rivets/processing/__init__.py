@@ -2,6 +2,7 @@ from registry import ProcessorRegistry
 
 from directive_processor import DirectiveProcessor
 from safety_colons import SafetyColons
+from charset_normalizer import CharsetNormalizer
 
 from uglipyjs_compressor import UglipyJSCompressor
 from rjsmin_compressor import RJSMinCompressor
@@ -15,6 +16,8 @@ processor_registry.register_preprocessor('application/javascript',DirectiveProce
 processor_registry.register_preprocessor('text/css',DirectiveProcessor)
 
 processor_registry.register_postprocessor('application/javascript',SafetyColons)
+
+processor_registry.register_bundleprocessor('text/css',CharsetNormalizer)
 
 processor_registry.register_compressor('application/javascript','uglify',UglipyJSCompressor)
 processor_registry.register_compressor('application/javascript','uglipy',UglipyJSCompressor)

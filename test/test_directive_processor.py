@@ -178,7 +178,7 @@ class TestCustomDirectiveProcessor(RivetsTest):
 		self.env.unregister_preprocessor('application/javascript',rivets.processing.DirectiveProcessor)
 		self.env.register_preprocessor('application/javascript',CustomDirectiveProcessor)
 
-		self.assertEqual("var Foo = {};\n",str(self.env["require_glob.js"]))
+		self.assertEqual("var Foo = {};\n\n",str(self.env["require_glob.js"]))
 
 
 if __name__ == '__main__':

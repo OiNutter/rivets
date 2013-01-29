@@ -26,7 +26,7 @@ class DirectiveProcessor(Template):
 		self.header = matches.group(0) if matches else ''
 		self.body = re.sub(re.escape(self.header) + "\n?",'',self.data,1)
 		
-		if self.body != "" and not self.body.endswith('\n'):
+		if self.body != "" and not re.search(r"""\n\Z""",self.body,re.M):
 			self.body += '\n'
 
 		self.included_pathnames = []
@@ -58,7 +58,7 @@ class DirectiveProcessor(Template):
 
 		header = ''.join(processed_header).rstrip('\n')
 
-		return header + '\n' if header != "" else ""
+		return header + '\n' if not re.search(r"""\A\s*\Z""",header,re.M) else ""
 
 	@property
 	def processed_source(self):
@@ -77,7 +77,7 @@ class DirectiveProcessor(Template):
 
 		for path in self.included_pathnames:
 			self.result += self.context.evaluate(path)
-
+			
 		if not self.has_written_body:
 			self.result += self.body
 
@@ -121,7 +121,7 @@ class DirectiveProcessor(Template):
 		if self.has_written_body:
 			raise ArgumentError('require_self can only be called once per source file')
 
-		self.context.require_asset(self.pathname)
+		self.context.require_asset(self._file)
 		self.process_source()
 		self.included_pathnames = []
 		self.has_written_body = True

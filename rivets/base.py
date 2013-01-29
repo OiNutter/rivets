@@ -5,13 +5,15 @@ import json
 import copy
 
 from assets import Asset, AssetAttributes, BundledAsset, ProcessedAsset, StaticAsset
-from errors import FileNotFound
+from errors import FileNotFound, CircularDependencyError
 
 
 class Base(object):
 
 	default_encoding = 'utf8'
 	_digest = None
+
+	_circular_calls = None
 
 	@property
 	def digest(self):
@@ -162,7 +164,7 @@ class Base(object):
 		if self.get_attributes_for(path).processors:
 
 			if not options['bundle']:
-				return ProcessedAsset(self,logical_path,path)
+				return self.circular_call_protection(path,callback = lambda :ProcessedAsset(self,logical_path,path))
 			else:
 				return BundledAsset(self,logical_path,path)
 		else:
@@ -256,6 +258,30 @@ class Base(object):
 				files[logical_path] = True
 
 		self.each_file(callback=do)
+
+	def circular_call_protection(self,path,callback=None):
+		
+		reset = self._circular_calls == None
+
+		try:	
+
+			if not self._circular_calls:
+				self._circular_calls = set()
+
+			calls = self._circular_calls
+
+			if path in calls:
+				raise CircularDependencyError("%s has already been required")
+
+			calls.add(path)
+
+			if callback:
+				return callback()
+
+		finally:
+			if reset:
+				self._circular_calls = None
+
 
 	def logical_path_for_fullname(self,filename,filters):
 		logical_path = self.get_attributes_for(filename).logical_path

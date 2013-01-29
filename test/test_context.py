@@ -20,7 +20,7 @@ class TestContext(RivetsTest):
 	def testContextEnvironmentIsIndexed(self):
 		''' Test context environment is indexed '''
 
-		instances = str(self.env['environment.js']).split('\n')
+		instances = str(self.env['environment.js']).split('\n;\n')
 		assert re.search("Index",instances[0])
 		self.assertEqual(instances[0],instances[1])
 
@@ -115,7 +115,7 @@ class TestCustomProcessor(RivetsTest):
 		''' Test custom processor using Context#require '''
 		self.env.register_engine('.yml',YamlProcessor)
 		self.assertEqual(
-				"var Foo = {};\nvar Bar = {};\n",
+				"var Foo = {};\n\nvar Bar = {};\n",
 				str(self.env['application.js'])
 			)
 
@@ -162,7 +162,7 @@ class TestCustomProcessor(RivetsTest):
 					self.fixture_path("context/foo.js"),
 					self.fixture_path("context/foo.js"),
 					self.fixture_path("context/foo.js"),
-					"foo.js is 'application/javascript', not 'text/css';"
+					"foo.js is 'application/javascript', not 'text/css'\n;"
 				]),
 				str(self.env['resolve_content_type.js']).strip()
 			)

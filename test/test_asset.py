@@ -8,6 +8,8 @@ import os
 import time,datetime
 import regex as re
 
+from lean import CoffeeScriptTemplate
+
 from rivets_test import RivetsTest
 import rivets
 
@@ -593,7 +595,7 @@ class ProcessedAssetTest(RivetsTest,AssetTests,FreshnessTests):
 
 	def testLength(self):
 		''' Test length '''
-		self.assertEqual(66,self.asset.length)
+		self.assertEqual(67,self.asset.length)
 
 	def testSplat(self):
 		''' Test splat '''
@@ -606,7 +608,7 @@ class ProcessedAssetTest(RivetsTest,AssetTests,FreshnessTests):
 	def testToString(self):
 		''' Test to_string '''
 		self.assertEqual(
-				"document.on('dom:loaded', function() {\n  $('search').focus();\n});\n",
+				"\ndocument.on('dom:loaded', function() {\n  $('search').focus();\n});\n",
 				str(self.asset)
 			)
 
@@ -617,7 +619,7 @@ class ProcessedAssetTest(RivetsTest,AssetTests,FreshnessTests):
 			body += asset.body
 
 		self.assertEqual(
-				"document.on('dom:loaded', function() {\n  $('search').focus();\n});\n",
+				"\ndocument.on('dom:loaded', function() {\n  $('search').focus();\n});\n",
 				body
 			)
 
@@ -686,12 +688,12 @@ class BundledAssetTest(RivetsTest,AssetTests,FreshnessTests):
 
 	def testLength(self):
 		''' Test length '''
-		self.assertEqual(156,self.asset.length)
+		self.assertEqual(157,self.asset.length)
 
 	def testToString(self):
 		''' Test to_string '''
 		self.assertEqual(
-				"var Project = {\n  find: function(id) {\n  }\n};\nvar Users = {\n  find: function(id) {\n  }\n};\ndocument.on('dom:loaded', function() {\n  $('search').focus();\n});\n",
+				"var Project = {\n  find: function(id) {\n  }\n};\nvar Users = {\n  find: function(id) {\n  }\n};\n\ndocument.on('dom:loaded', function() {\n  $('search').focus();\n});\n",
 				str(self.asset)
 			)
 
@@ -771,7 +773,7 @@ class BundledAssetTest(RivetsTest,AssetTests,FreshnessTests):
 		''' Test bundled asset body is just it's own contents '''
 
 		self.assertEqual(
-				"document.on('dom:loaded', function() {\n  $('search').focus();\n});\n",
+				"\ndocument.on('dom:loaded', function() {\n  $('search').focus();\n});\n",
 				self.get_asset('application.js').body
 			)
 
@@ -779,7 +781,7 @@ class BundledAssetTest(RivetsTest,AssetTests,FreshnessTests):
 		''' Test bundling joins files with blank line '''
 
 		self.assertEqual(
-				"var Project = {\n  find: function(id) {\n  }\n};\nvar Users = {\n  find: function(id) {\n  }\n};\ndocument.on('dom:loaded', function() {\n  $('search').focus();\n});\n",
+				"var Project = {\n  find: function(id) {\n  }\n};\nvar Users = {\n  find: function(id) {\n  }\n};\n\ndocument.on('dom:loaded', function() {\n  $('search').focus();\n});\n",
 				str(self.get_asset('application.js'))
 			)
 
@@ -932,9 +934,150 @@ class BundledAssetTest(RivetsTest,AssetTests,FreshnessTests):
 		''' Test require tree respects order of child dependencies '''
 
 		self.assertEqual(
-				"var c;\nvar b;\nvar a;\n",
+				"var c;\nvar b;\nvar a;\n\n",
 				str(self.get_asset('tree/require_tree_alpha.js'))
 			)
+
+	def testRequireSelfInsertsTheCurrentFilesBodyAtTheSpecifiedPoint(self):
+		''' Test require_self inserts the current file's body at the specified point '''
+
+		self.assertEqual(
+				'/* b.css */\n\nb { display: none }\n/*\n\n\n\n\n\n */\n\n.one {}\n\nbody {}\n.two {}\n.project {}\n',
+				str(self.get_asset("require_self.css"))
+			)
+
+	def testMultipleRequireSelfDirectivesRaisesAnError(self):
+		''' Test multiple require_self directives raises an error '''
+
+		self.assertRaises(
+				rivets.errors.ArgumentError,
+				self.get_asset,
+				"require_self_twice.css"
+			)
+
+	def testStubSingleDependency(self):
+		''' Test stub single dependency '''
+
+		self.assertEqual(
+				'var jQuery.UI = {};\n',
+				str(self.get_asset('stub/skip_jquery'))
+			)
+
+	def testStubDependencyTree(self):
+		''' Test stub dependency tree '''
+
+		self.assertEqual(
+				'var Foo = {};\n',
+				str(self.get_asset('stub/application'))
+			)
+
+	def testCircularRequireRaisesAnError(self):
+		''' Test circular require raises an error '''
+
+		self.assertRaises(
+				rivets.errors.CircularDependencyError,
+				self.get_asset,
+				'circle/a.js'
+			)
+
+		self.assertRaises(
+				rivets.errors.CircularDependencyError,
+				self.get_asset,
+				'circle/b.js'
+			)
+
+		self.assertRaises(
+				rivets.errors.CircularDependencyError,
+				self.get_asset,
+				'circle/c.js'
+			)
+
+	def testUnknownDirectivesAreIgnored(self):
+		''' Test unknown directives are ignored '''
+
+		self.assertEqual(
+				"var Project = {\n  find: function(id) {\n  }\n};\n\n//\n// = Foo\n//\n// == Examples\n//\n// Foo.bar()\n// => \"baz\"\n\nvar Foo;\n",
+				str(self.get_asset('documentation.js'))
+			)
+
+	def assetInheritsTheFormatExtensionAndContentTypeOfTheOriginalFile(self):
+		''' Test asset inherits the format extension and content type of the original file '''
+
+		asset = self.get_asset("project.js")
+		self.assertEqual(
+				"application/javascript",
+				asset.content_type
+			)
+
+	if hasattr(CoffeeScriptTemplate,'default_mime_type'):
+		def testAssetFallsBackToEnginesDefaultMimeType(self):
+			asset = self.get_asset("default_mime_type.js")
+			self.assertEqual(
+					"application/javascript",
+					asset.content_type
+				)
+
+	def testAssetLengthIsSourceLengthWithUnicodeCharacters(self):
+		''' Test asset length is source length with unicode characters '''
+		self.assertEqual(
+				6,
+				self.get_asset('unicode.js').length
+			)
+
+	def testAssetDigest(self):
+		''' Test asset digest '''
+
+		assert self.get_asset('project.js').digest
+
+	def testAssetDigestPath(self):
+		''' Test asset digest path '''
+
+		assert re.match(r"""project-\w+\.js""",self.get_asset("project.js").digest_path)
+
+	def testAssetIsFreshIfItsMtimeAndContentsAreTheSame(self):
+		''' Test asset is fresh if its mtime and contents are the same '''
+
+		assert self.get_asset('application.js').is_fresh(self.env)
+
+	def testMultipleCharsetDefinitionsAreStrippedFromCSSBundle(self):
+		''' Test multiple charset defintions are stripped from css bundle '''
+
+		self.assertEqual(
+				"@charset \"UTF-8\";\n.foo {}\n\n.bar {}\n",
+				str(self.get_asset("charset.css"))
+			)
+
+	def testAppendsMissingSemicolons(self):
+		''' Test appends missing semicolons '''
+		
+		self.assertEqual(
+				"var Bar\n;\n\n(function() {\n  var Foo\n})\n;\n",
+				str(self.get_asset('semicolons.js'))
+			)
+
+	def testSerializingAssetToAndFromHash(self):
+		''' Test serializing to and from hash '''
+
+		expected = self.asset
+		hashed = {}
+		self.asset.encode_with(hashed)
+		actual = rivets.assets.Asset.from_hash(self.env,hashed)
+
+		self.assertIsInstance(actual,rivets.assets.BundledAsset)
+		self.assertEqual(expected.logical_path,actual.logical_path)
+		self.assertEqual(expected.pathname,actual.pathname)
+		self.assertEqual(expected.content_type,actual.content_type)
+		self.assertEqual(expected.length,actual.length)
+		self.assertEqual(expected.digest,actual.digest)
+		self.assertEqual(expected.is_fresh(self.env),actual.is_fresh(self.env))
+
+		self.assertEqual(expected.dependencies,actual.dependencies)
+		self.assertEqual(expected.to_list(),actual.to_list())
+		self.assertEqual(expected.body,actual.body)
+		self.assertEqual(str(expected),str(actual))
+
+		assert actual.equals(expected) 
+		assert expected.equals(actual)
 
 if __name__ == '__main__':
     unittest.main()

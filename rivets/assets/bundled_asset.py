@@ -47,7 +47,11 @@ class BundledAsset(Asset):
 
 	@property
 	def body(self):
-		return str(self.processed_asset.source)
+		source = self.processed_asset.source
+		try:
+			return str(source)
+		except:
+			return unicode(source)
 
 	@property
 	def dependencies(self):
