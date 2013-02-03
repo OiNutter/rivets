@@ -144,6 +144,14 @@ class Asset(object):
 			if os.path.exists("%s+"%filename):
 				os.remove("%s+"%filename)
 
+	@property
+	def dependency_paths(self):
+		return getattr(self,'_dependency_paths',[])
+
+	@property
+	def required_assets(self):
+		return getattr(self,'_required_assets',[])
+
 	def relative_pathname(self):
 		return self.relative_pathname if self.relative_pathname else self.relativize_root_path(self.pathname)
 

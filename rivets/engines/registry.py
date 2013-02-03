@@ -18,3 +18,8 @@ class EngineRegistry:
 			return self.engines[ext]
 		else:
 			return None
+
+	@property
+	def engine_extensions(self):
+
+		return self.engines.keys()

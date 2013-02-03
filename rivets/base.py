@@ -6,9 +6,10 @@ import copy
 
 from assets import Asset, AssetAttributes, BundledAsset, ProcessedAsset, StaticAsset
 from errors import FileNotFound, CircularDependencyError
+from paths import Paths
 
 
-class Base(object):
+class Base(Paths,object):
 
 	default_encoding = 'utf8'
 	_digest = None
@@ -37,35 +38,8 @@ class Base(object):
 		return digest
 
 	@property
-	def root(self):
-		return copy.deepcopy(self.search_path.root)
-
-	@property
-	def paths(self):
-		return copy.deepcopy(self.search_path.paths)
-
-	@property
 	def extensions(self):
 		return copy.deepcopy(self.search_path.extensions)
-
-	def prepend_path(self,*paths):
-		self.prepend_paths(*paths)
-
-	def prepend_paths(self,*paths):
-		self.expire_index()
-		self.search_paths.append_paths(*paths)
-
-	def append_path(self,*paths):
-		self.append_paths(*paths)
-
-	def append_paths(self,*paths):
-		self.expire_index()
-		self.search_path.append_paths(*paths)
-
-	def clear_paths(self):
-		self.expire_index()
-		for path in copy.deepcopy(self.search_path.paths):
-			self.search_path.paths.remove_path(path)
 
 	def register_mimetype(self,extension,mimetype):
 		self.expire_index()
@@ -114,6 +88,22 @@ class Base(object):
 			format_ext = self.mimetypes.get_extension_for_mimetype(engine.default_mime_type)
 			if format_ext:
 				self.search_path.alias_extension(extension, format_ext)
+
+	def prepend_paths(self,*paths):
+		self.expire_index()
+		super(Base,self).prepend_paths(*paths)
+
+	def append_paths(self,*paths):
+		self.expire_index()
+		super(Base,self).append_paths(*paths)
+
+	def clear_paths(self):
+		self.expire_index()
+		super(Base,self).clear_paths()
+
+	@property
+	def format_extensions(self):
+		return set(self.search_path.extensions) - set(self.engines.engines.keys())
 
 	@property
 	def index(self):
@@ -181,8 +171,11 @@ class Base(object):
 							component = json.loads(open(path).read())
 
 							if component.has_key('main'):
-								if isinstance(component['main'],str):
-									return options['callback'](os.path.join(os.path.dirname(path),component['main']))
+								print 'IN MAIN'
+								print component['main']
+								if isinstance(component['main'],str) or isinstance(component['main'],unicode):
+									print os.path.join(os.path.dirname(path),component['main'])
+									return callback(os.path.join(os.path.dirname(path),component['main']))
 								elif isinstance(component['main'],list):
 									filename,ext = os.path.splitext(logical_path)
 

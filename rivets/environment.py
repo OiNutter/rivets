@@ -8,6 +8,7 @@ from index import Index
 from mime import mimetype_registry
 from engines import engine_registry
 from processing import processor_registry
+from paths import path_registry
 
 
 class Environment(Base):
@@ -22,6 +23,9 @@ class Environment(Base):
 		self.processors = copy.deepcopy(processor_registry)
 
 		self.context_class = Context
+
+		for path in path_registry.paths:
+			self.search_path.append_path(path)
 
 		for extension in self.mimetypes.mimetypes.keys():
 			self.search_path.append_extension(extension)

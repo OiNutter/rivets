@@ -9,8 +9,8 @@ class BundledAsset(Asset):
 			super(BundledAsset,self).__init__(environment,logical_path,pathname)
 
 			self.processed_asset = environment.find_asset(pathname,bundle=False)
-			self.required_assets = self.processed_asset.required_assets if self.processed_asset else []
-			self.dependency_paths = unique_list(self.processed_asset.dependency_paths) if self.processed_asset else []
+			self._required_assets = self.processed_asset.required_assets if self.processed_asset else []
+			self._dependency_paths = unique_list(self.processed_asset.dependency_paths) if self.processed_asset else []
 
 			self.source = ""
 

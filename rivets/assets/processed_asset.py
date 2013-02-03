@@ -89,7 +89,7 @@ class ProcessedAsset(Asset):
 		to_include = unique_list(self.resolve_dependencies(environment,include_paths))
 		stubbed = unique_list(self.resolve_dependencies(environment,unique_list(context.stubbed_assets)))
 
-		self.required_assets = [x for x in to_include if x not in stubbed]
+		self._required_assets = [x for x in to_include if x not in stubbed]
 
 	def resolve_dependencies(self,environment,paths):
 		assets = []
@@ -129,7 +129,7 @@ class ProcessedAsset(Asset):
 					for dep in asset.dependency_paths:
 						dependency_paths[dep] = True
 
-		self.dependency_paths = dependency_paths.keys()
+		self._dependency_paths = dependency_paths.keys()
 
 	def compute_dependency_digest(self,environment):
 

@@ -3,6 +3,7 @@ import regex as re
 
 from errors import ContentTypeMismatch,FileNotFound
 import utils
+import base64
 
 class Context(object):
 
@@ -122,3 +123,11 @@ class Context(object):
 		location += ":%s" % self.line if self.line else ''
 
 		raise exception.__class__("%s (in %s)" % (str(exception),location))
+
+	def asset_data_uri(self,path):
+		self.depend_on_asset(path)
+		asset = self.environment.find_asset(path)
+		s = base64.b64encode(str(asset))
+
+		from urllib import quote_plus
+		return "data:%s;base64,%s" % (asset.content_type,quote_plus(s))
