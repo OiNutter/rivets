@@ -30,7 +30,7 @@ class BundledAsset(Asset):
 		super(BundledAsset,self).init_with(environment,coder)
 
 		self.processed_asset = environment.find_asset(self.pathname,bundle=False)
-		self.required_assets = self.processed_asset.required_assets
+		self._required_assets = self.processed_asset.required_assets
 
 		if self.processed_asset.dependency_digest != coder['required_assets_digest']:
 			raise UnserializeError('processed asset belongs to a stale environment')

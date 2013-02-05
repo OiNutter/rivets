@@ -101,6 +101,8 @@ class AssetAttributes:
 		if content_type:
 			return self.environment.mimetypes.get_extension_for_mimetype(content_type)
 
+		return ""
+
 	@property
 	def processors(self):
 		content_type = self.content_type

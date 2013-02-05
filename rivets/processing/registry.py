@@ -44,8 +44,15 @@ class ProcessorRegistry:
 		return self.unregister_processor('bundle',mimetype,processor)
 
 	def unregister_processor(self,position,mimetype,processor):
+
 		if self.processors[position].has_key(mimetype):
-			self.processors[position][mimetype].remove(processor)
+			if not isinstance(processor,str):
+				self.processors[position][mimetype].remove(processor)
+			else:
+				for klass in self.processors[position][mimetype]:
+					if klass.__name__ == processor:
+						self.processors[position][mimetype].remove(klass)
+
 
 	def get_preprocessors(self,mimetype):
 		return self.get_processors('pre',mimetype)
@@ -68,6 +75,10 @@ class ProcessorRegistry:
 			self.compressors[mimetype] = {}
 
 		self.compressors[mimetype][name] = processor
+
+	def unregister_compressor(self,mimetype,name):
+		if self.compressors.has_key(mimetype):
+			del self.compressors[mimetype][name]
 
 	def get_compressors(self,mimetype):
 		return self.compressors[mimetype] if self.compressors.has_key(mimetype) else []

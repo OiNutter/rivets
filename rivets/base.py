@@ -3,6 +3,7 @@ import re
 from hashlib import md5
 import json
 import copy
+import threading
 
 from assets import Asset, AssetAttributes, BundledAsset, ProcessedAsset, StaticAsset
 from errors import FileNotFound, CircularDependencyError
@@ -74,6 +75,14 @@ class Base(Paths,object):
 	def unregister_bundleprocessor(self,mimetype,processor):
 		self.expire_index()
 		self.processors.unregister_bundleprocessor(mimetype,processor)
+
+	def register_compressor(self,mimetype,name,compressor):
+		self.expire_index()
+		self.processors.register_compressor(mimetype,name,compressor)
+
+	def unregister_compressor(self,mimetype,name):
+		self.expire_index()
+		self.processors.unregister_compressor(mimetype,name)
 
 	def set_js_compressor(self,compressor):
 		self.processors.set_js_compressor(compressor)
@@ -171,10 +180,7 @@ class Base(Paths,object):
 							component = json.loads(open(path).read())
 
 							if component.has_key('main'):
-								print 'IN MAIN'
-								print component['main']
 								if isinstance(component['main'],str) or isinstance(component['main'],unicode):
-									print os.path.join(os.path.dirname(path),component['main'])
 									return callback(os.path.join(os.path.dirname(path),component['main']))
 								elif isinstance(component['main'],list):
 									filename,ext = os.path.splitext(logical_path)
@@ -208,9 +214,6 @@ class Base(Paths,object):
 
 	def each_entry(self,root,callback=None):
 
-		if not callback:
-			return 
-			
 		paths = []
 		for filename in sorted(self.entries(root)):
 			path = os.path.join(root,filename)
@@ -219,57 +222,68 @@ class Base(Paths,object):
 			if os.path.isdir(path):
 				self.each_entry(path,callback= lambda x:paths.append(x))
 
+		if not callback:
+			return sorted(paths)
+
 		for path in sorted(paths):
 			callback(path)
 
 	def each_file(self,callback=None):
 
-		if not callback:
-			return
+		files = []
+
+		def do(path):
+			if not os.path.isdir(path):
+				files.append(path)
 
 		for root in self.paths:
-			def do(path):
-				if os.path.isdir(path):
-					callback(path)
-
 			self.each_entry(root,callback=do)
 
-	def each_logical_path(self,callback=None,*args):
-
 		if not callback:
-			return
+			return sorted(files)
 
-		filters = [item for sublist in args for item in sublist]
+		for filename in sorted(files):
+			callback(filename)
+
+	def each_logical_path(self,*filters,**kwargs):
+
+		callback = kwargs.pop('callback',None)
+
+		#filters = [item for sublist in args  for item in sublist ]
 		files = {}
+
+		#print args
+		filters = list(filters)
 
 		def do(filename):
 			logical_path = self.logical_path_for_fullname(filename,filters)
 			if logical_path:
 				if not files.has_key(logical_path):
-					callback(logical_path,filename)
-
-				files[logical_path] = True
+					files[logical_path] = filename
 
 		self.each_file(callback=do)
 
-	def circular_call_protection(self,path,callback=None):
-		
+		if not callback:
+			return files.keys()
+
+		for logical_path,filename in files.iteritems():
+			callback(logical_path,filename)
+
+	def circular_call_protection(self,path,callback):
+
 		reset = self._circular_calls == None
 
-		try:	
+		try:
 
 			if not self._circular_calls:
 				self._circular_calls = set()
 
-			calls = self._circular_calls
+			if path in self._circular_calls:
+				raise CircularDependencyError("%s has already been required"%path)
 
-			if path in calls:
-				raise CircularDependencyError("%s has already been required")
+			self._circular_calls.add(path)
 
-			calls.add(path)
-
-			if callback:
-				return callback()
+			return callback()
 
 		finally:
 			if reset:
@@ -282,9 +296,9 @@ class Base(Paths,object):
 		if self.matches_filter(filters,logical_path,filename):
 			return logical_path
 
-		pieces = re.split(r"""[^\.]+""",os.path.basename(logical_path))
+		pieces = re.findall(r"""([^\.]+)""",os.path.basename(logical_path))
 		if pieces[0] == 'index':
-			path = re.replace(r"""\/index\.""",".",logical_path)
+			path = re.sub(r"""\/index\.""",".",logical_path)
 			if self.matches_filter(filters,path,filename):
 				return path
 
@@ -295,21 +309,23 @@ class Base(Paths,object):
 		if filters == []:
 			return True
 
+		regex_type = type(re.compile("",0))
+
 		match = False
-		for filter in filters:
-			if isinstance(filter,re.RegexObject):
-				if filter.search(logical_path):
+		for f in filters:
+			if isinstance(f,regex_type):
+				if f.search(logical_path):
 					match = True
 					break
 
-			elif hasattr(filter,'__call__'):
-				if filter.__call__(logical_path,filename):
+			elif hasattr(f,'__call__'):
+				if f.__call__(logical_path,filename):
 					match = True
 					break
 
 			else:
 				import fnmatch
-				if fnmatch.fnmatch(str(filter),logical_path):
+				if fnmatch.fnmatch(logical_path,str(f)):
 					match = True
 					break
 

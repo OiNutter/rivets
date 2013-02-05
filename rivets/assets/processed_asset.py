@@ -29,7 +29,7 @@ class ProcessedAsset(Asset):
 
 		self.source = coder['source']
 		self.dependency_digest = coder['dependency_digest']
-		self.required_assets = []
+		self._required_assets = []
 
 		for path in coder['required_paths']:
 			p = self.expand_root_path(path)
@@ -44,7 +44,7 @@ class ProcessedAsset(Asset):
 
 			self.required_assets.append(self if p == self.pathname else environment.find_asset(p,bundle = False))
 
-		self.dependency_paths = []
+		self._dependency_paths = []
 
 		for dep in coder['dependency_paths']:
 			self.dependency_paths.append(DependencyFile(self.expand_root_path(dep['path']),dep['mtime'],dep['digest']))

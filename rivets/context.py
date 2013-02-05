@@ -88,7 +88,7 @@ class Context(object):
 			raise FileNotFound("Couldn't find file %s" % path)
 
 		else:
-			options['base_path'] = os.path.dirname(self.pathname)
+			options['base_path'] = os.path.realpath(os.path.dirname(self.pathname))
 			return self.environment.resolve(path,**options)
 
 	def depend_on(self,path):
