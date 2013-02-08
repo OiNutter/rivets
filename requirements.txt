@@ -1,4 +1,4 @@
-lean
-crawl
+lean >= 0.2.3
+crawl >= 0.5.3
 regex
 rivets
