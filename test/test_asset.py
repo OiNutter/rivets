@@ -788,7 +788,7 @@ class BundledAssetTest(RivetsTest,AssetTests,FreshnessTests):
 	def testDependenciesAppearInTheSourceBeforeFilesThatRequiredThem(self):
 		''' Test dependencies appear in the source before files that required them '''
 
-		assert re.search(r"""Project.+Users.+focus""",str(self.get_asset('application.js')),re.M|re.S)
+		self.assertRegexpMatches(str(self.get_asset('application.js')),re.compile(r"""Project.+Users.+focus""",re.M|re.S))
 
 	def testProcessingASourceFileWithNoEngineExtensions(self):
 		''' Test processing a source file with no engine extensions '''
@@ -849,7 +849,7 @@ class BundledAssetTest(RivetsTest,AssetTests,FreshnessTests):
 		''' Test can't require files outside the load path '''
 
 		self.assertRaises(
-				rivets.errors.FileNotFound,
+				rivets.errors.FileOutsidePaths,
 				self.get_asset,
 				"relative/require_outside_path.js"
 			)

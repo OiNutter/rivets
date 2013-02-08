@@ -1,4 +1,5 @@
 from base import Base
+import copy
 
 class Index(Base):
 
@@ -11,10 +12,10 @@ class Index(Base):
 		self.cache = environment.cache
 		self.search_path = environment.search_path.index()
 		self._digest = environment.digest
-		self.version = environment.version
-		self.mimetypes = environment.mimetypes
-		self.engines = environment.engines
-		self.processors = environment.processors
+		self._version = environment.version
+		self.mimetypes = copy.deepcopy(environment.mimetypes)
+		self.engines = copy.deepcopy(environment.engines)
+		self.processors = copy.deepcopy(environment.processors)
 
 		self.assets = {}
 		self.digests = {}

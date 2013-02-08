@@ -61,7 +61,7 @@ class AssetAttributes:
 		format_extension = self.format_extension
 		
 		if format_extension:
-			content_type = self.environment.mimetypes.get_mimetype(format_extension)
+			content_type = self.environment.mimetypes[format_extension]
 		else:
 			content_type = self.engine_content_type
 
@@ -75,14 +75,14 @@ class AssetAttributes:
 			exts = exts[offset+1:]
 		except ValueError:
 			exts = exts
-		return [ext for ext in unique_list(exts) if self.environment.engines.get_engine(ext)]
+		return [ext for ext in unique_list(exts) if self.environment.engines[ext]]
 
 	@property
 	def engines(self):
 		engine_extensions = self.engine_extensions
 		engines = []
 		for ext in engine_extensions:
-			engines.append(self.environment.engines.get_engine(ext))
+			engines.append(self.environment.engines[ext])
 		return engines
 
 	@property
@@ -136,7 +136,7 @@ class AssetAttributes:
 		extensions.reverse()
 
 		for ext in extensions:
-			if self.environment.mimetypes.get_mimetype(ext) and not self.environment.engines.get_engine(ext):
+			if self.environment.mimetypes[ext] and not self.environment.engines[ext]:
 				return ext
 
 		return None

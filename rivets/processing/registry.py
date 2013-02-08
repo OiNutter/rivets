@@ -1,18 +1,19 @@
 from processor import Processor
 
-class ProcessorRegistry:
+class ProcessorRegistry(object):
 
-	# list of processors to be run before or after engine processors
-	processors = {
-		"pre":{},
-		"post":{},
-		"bundle":{}
-	}
+	def __init__(self):
+		# list of processors to be run before or after engine processors
+		self.processors = {
+			"pre":{},
+			"post":{},
+			"bundle":{}
+		}
 
-	# special list of post processors to be run as the last processors
-	compressors = {}
-	js_compressor=None
-	css_compressor=None
+		# special list of post processors to be run as the last processors
+		self.compressors = {}
+		self._js_compressor=None
+		self._css_compressor=None
 
 	def register_preprocessor(self,mimetype,processor,callback=None):
 		self.register_processor('pre',mimetype,processor,callback)
@@ -47,7 +48,8 @@ class ProcessorRegistry:
 
 		if self.processors[position].has_key(mimetype):
 			if not isinstance(processor,str):
-				self.processors[position][mimetype].remove(processor)
+				if processor in self.processors[position][mimetype]:
+					self.processors[position][mimetype].remove(processor)
 			else:
 				for klass in self.processors[position][mimetype]:
 					if klass.__name__ == processor:
@@ -81,24 +83,36 @@ class ProcessorRegistry:
 			del self.compressors[mimetype][name]
 
 	def get_compressors(self,mimetype):
-		return self.compressors[mimetype] if self.compressors.has_key(mimetype) else []
+		return self.compressors[mimetype] if self.compressors.has_key(mimetype) else {}
 
-	def get_js_compressor(self):
-		return self.js_compressor
+	@property
+	def js_compressor(self):
+		return self._js_compressor
 
-	def set_js_compressor(self,processor):
+	@js_compressor.setter
+	def js_compressor(self,processor):
 		self.unregister_bundleprocessor('application/javascript',self.js_compressor)
 
-		self.js_compressor = processor
+		if isinstance(processor,str) or isinstance(processor,unicode):
+			compressors = self.get_compressors('application/javascript')
+			processor = compressors[processor] if compressors and compressors.has_key(processor) else None
+
+		self._js_compressor = processor
 
 		self.register_bundleprocessor('application/javascript',processor)
 
-	def get_css_compressor(self):
-		return self.css_compressor
+	@property
+	def css_compressor(self):
+		return self._css_compressor
 
-	def set_css_compressor(self,processor):
+	@css_compressor.setter
+	def css_compressor(self,processor):
 		self.unregister_bundleprocessor('text/css',self.css_compressor)
 
-		self.css_compressor = processor
+		if isinstance(processor,str):
+			compressors = self.get_compressors('text/css')
+			processor = compressors[processor] if compressors and compressors.has_key(processor) else None
+
+		self._css_compressor = processor
 
 		self.register_bundleprocessor('text/css',processor)

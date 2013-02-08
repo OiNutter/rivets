@@ -6,9 +6,12 @@ else:
 	import unittest
 import os
 import re
+import datetime,time
 
 from rivets_test import RivetsTest
 import rivets
+import execjs
+import lean
 
 class EnvironmentTests(object):
 
@@ -79,11 +82,11 @@ class EnvironmentTests(object):
 
 	def testLookupMimeType(self):
 		''' Test lookup mime type '''
-		self.assertEqual("application/javascript",self.env.mimetypes.get_mimetype(".js"))
-		self.assertEqual("application/javascript",self.env.mimetypes.get_mimetype("js"))
-		self.assertEqual("text/css",self.env.mimetypes.get_mimetype(".css"))
-		self.assertEqual(None,self.env.mimetypes.get_mimetype("foo"))
-		self.assertEqual(None,self.env.mimetypes.get_mimetype("foo"))
+		self.assertEqual("application/javascript",self.env.mimetypes[".js"])
+		self.assertEqual("application/javascript",self.env.mimetypes["js"])
+		self.assertEqual("text/css",self.env.mimetypes[".css"])
+		self.assertEqual(None,self.env.mimetypes["foo"])
+		self.assertEqual(None,self.env.mimetypes["foo"])
 
 	def testLookupBundleProcessors(self):
 		''' Test lookup bundle processors '''
@@ -482,9 +485,9 @@ class TestEnvironment(RivetsTest,EnvironmentTests):
 	def testRegisterMimeType(self):
 		''' Test register mime type '''
 
-		assert not self.env.mimetypes.get_mimetype('jst')
+		assert not self.env.mimetypes['jst']
 		self.env.register_mimetype('jst','application/javascript')
-		self.assertEqual('application/javascript',self.env.mimetypes.get_mimetype('jst'))
+		self.assertEqual('application/javascript',self.env.mimetypes['jst'])
 
 	def testRegisterBundleProcessor(self):
 		''' Test register bundle processor '''
@@ -511,8 +514,8 @@ class TestEnvironment(RivetsTest,EnvironmentTests):
 		rivets.processing.processor_registry.unregister_preprocessor('text/css','foo')
 		self.assertEqual(old_size,len(self.new_environment().processors.get_preprocessors('text/css')))
 
-	def testUnregisterCustomBlockPreProcessor(self):
-		''' Test unregister global block processor '''
+	def testUnregisterCustomBlockPreprocessor(self):
+		''' Test unregister global block preprocessor '''
 
 		old_size = len(self.env.processors.get_preprocessors('text/css'))
 		def process(context,data):
@@ -522,6 +525,362 @@ class TestEnvironment(RivetsTest,EnvironmentTests):
 		self.env.unregister_preprocessor('text/css','foo')
 		self.assertEqual(old_size,len(self.env.processors.get_preprocessors('text/css')))
 
+	def testRegisterGlobalBlockPostprocessor(self):
+		''' Test register global block postprocessor '''
+
+		old_size = len(self.new_environment().processors.get_postprocessors('text/css'))
+		def process(context,data):
+			return data
+		rivets.processing.processor_registry.register_postprocessor('text/css','foo',callback=process)
+		self.assertEqual(old_size+1,len(self.new_environment().processors.get_postprocessors('text/css')))
+		rivets.processing.processor_registry.unregister_postprocessor('text/css','foo')
+		self.assertEqual(old_size,len(self.new_environment().processors.get_postprocessors('text/css')))
+
+	def testUnregisterCustomBlockPostprocessor(self):
+		''' Test unregister global block postprocessor '''
+
+		old_size = len(self.env.processors.get_postprocessors('text/css'))
+		def process(context,data):
+			return data
+		self.env.register_postprocessor('text/css','foo',callback=process)
+		self.assertEqual(old_size+1,len(self.env.processors.get_postprocessors('text/css')))
+		self.env.unregister_postprocessor('text/css','foo')
+		self.assertEqual(old_size,len(self.env.processors.get_postprocessors('text/css')))
+
+	def testUnregisterCustomBlockBundleProcessor(self):
+		''' Test unregister global block bundle processor '''
+
+		old_size = len(self.env.processors.get_bundleprocessors('text/css'))
+		def process(context,data):
+			return data
+		self.env.register_bundleprocessor('text/css','foo',callback=process)
+		self.assertEqual(old_size+1,len(self.env.processors.get_bundleprocessors('text/css')))
+		self.env.unregister_bundleprocessor('text/css','foo')
+		self.assertEqual(old_size,len(self.env.processors.get_bundleprocessors('text/css')))
+	
+	def testRegisterGlobalBundleProcessor(self):
+		''' Test register global bundle processor '''
+
+		assert WhitespaceCompressor not in self.env.processors.get_bundleprocessors('text/css')
+		rivets.processing.processor_registry.register_bundleprocessor('text/css',WhitespaceCompressor)
+		env = self.new_environment()
+		assert WhitespaceCompressor in env.processors.get_bundleprocessors('text/css')
+		rivets.processing.processor_registry.unregister_bundleprocessor('text/css',WhitespaceCompressor)
+
+	def testSettingCSSCompressorToNoneClearsCurrentCompressor(self):
+		''' Test setting css compressor to None clears current compressor '''
+
+		self.env.css_compressor = WhitespaceCompressor
+		assert self.env.css_compressor
+		self.env.css_compressor = None
+		self.assertIsNone(self.env.css_compressor)
+		
+	def testSettingJSCompressorToNoneClearsCurrentCompressor(self):
+		''' Test setting js compressor to None clears current compressor '''
+
+		self.env.js_compressor = WhitespaceCompressor
+		assert self.env.js_compressor
+		self.env.js_compressor = None
+		self.assertIsNone(self.env.js_compressor)
+
+	def testSettingJSCompressorToLeanHandler(self):
+		''' Test setting js compressor to Lean handler '''
+
+		self.assertIsNone(self.env.js_compressor)
+		self.env.js_compressor = rivets.processing.UglipyJSCompressor
+		self.assertEqual(rivets.processing.UglipyJSCompressor,self.env.js_compressor)
+		self.env.js_compressor = None
+		self.assertIsNone(self.env.js_compressor)
+
+	def testSettingCSSCompressorToLeanHandler(self):
+		''' Test setting css compressor to Lean handler '''
+
+		self.assertIsNone(self.env.css_compressor)
+		self.env.css_compressor = rivets.processing.CSSMinCompressor
+		self.assertEqual(rivets.processing.CSSMinCompressor,self.env.css_compressor)
+		self.env.css_compressor = None
+		self.assertIsNone(self.env.css_compressor)
+
+	def testSettingJSCompressorToString(self):
+		''' Test setting js compressor to string '''
+
+		self.assertIsNone(self.env.js_compressor)
+		self.env.js_compressor = 'uglifier'
+		self.assertEqual(rivets.processing.UglipyJSCompressor,self.env.js_compressor)
+		self.env.js_compressor = None
+		self.assertIsNone(self.env.js_compressor)
+
+	def testSettingCSSCompressorToString(self):
+		''' Test setting css compressor to string '''
+
+		self.assertIsNone(self.env.css_compressor)
+		self.env.css_compressor = 'cssmin'
+		self.assertEqual(rivets.processing.CSSMinCompressor,self.env.css_compressor)
+		self.env.css_compressor = None
+		self.assertIsNone(self.env.css_compressor)
+
+	def testChangingDigestImplementationClass(self):
+		''' Test changing digest implementation class '''
+
+		old_digest = self.env.digest.hexdigest()
+		old_asset_digest = self.env['gallery.js'].digest
+
+		import hashlib
+
+		self.env.digest_class = hashlib.sha1
+
+		self.assertNotEqual(old_digest,self.env.digest.hexdigest())
+		self.assertNotEqual(old_asset_digest,self.env['gallery.js'].digest)
+
+	def testChangingDigestVersion(self):
+		''' Test changing digest version '''
+		old_digest = self.env.digest.hexdigest()
+		old_asset_digest = self.env['gallery.js'].digest
+
+		self.env.version = 'v2'
+
+		self.assertNotEqual(old_digest,self.env.digest.hexdigest())
+		self.assertNotEqual(old_asset_digest,self.env['gallery.js'].digest)
+
+	def testBundledAssetIsStaleIfItsMTimeIsUpdatedorDeleted(self):
+		''' Test bundled asset is stale if its mtime is updated or deleted ''' 
+
+		filename = os.path.join(self.fixture_path('default'),"tmp.js")
+
+		def do_test():
+			self.assertIsNone(self.env['tmp.js'])
+
+			f = open(filename,'w')
+			f.write('foo;')
+			f.close()
+			self.assertEqual('foo;\n',str(self.env['tmp.js']))
+
+			f = open(filename,'w')
+			f.write('bar;')
+			f.close()
+			new_time = time.mktime((datetime.datetime.now()+datetime.timedelta(seconds=1)).timetuple())
+			os.utime(filename,(new_time,new_time))
+			self.assertEqual("bar;\n",str(self.env['tmp.js']))
+
+			os.unlink(filename)
+			self.assertIsNone(self.env['tmp.js'])
+
+		self.sandbox(filename,callback=do_test)
+
+	def testStaticAssetIsStaleIfItsMTimeIsUpdatedorDeleted(self):
+		''' Test static asset is stale if its mtime is updated or deleted ''' 
+
+		filename = os.path.join(self.fixture_path('default'),"tmp.png")
+
+		def do_test():
+			self.assertIsNone(self.env['tmp.png'])
+
+			f = open(filename,'w')
+			f.write('foo;')
+			f.close()
+			self.assertEqual('foo;',str(self.env['tmp.png']))
+
+			f = open(filename,'w')
+			f.write('bar;')
+			f.close()
+			new_time = time.mktime((datetime.datetime.now()+datetime.timedelta(seconds=1)).timetuple())
+			os.utime(filename,(new_time,new_time))
+			self.assertEqual("bar;",str(self.env['tmp.png']))
+
+			os.unlink(filename)
+			self.assertIsNone(self.env['tmp.png'])
+
+		self.sandbox(filename,callback=do_test)
+
+	def testBundledAssetCachedIfTheresAnErrorBuildingIt(self):
+		''' Test bundled asset cached if there's an error building it '''
+
+		self.env.cache = None
+
+		filename = os.path.join(self.fixture_path('default'),'tmp.coffee')
+
+		def do_test():
+			f = open(filename,'w')
+			f.write('-->')
+			f.close()
+			self.assertRaises(
+					execjs.ProgramError,
+					self.env.find_asset,
+					'tmp.js'
+				)
+
+			f = open(filename,'w')
+			f.write('->')
+			f.close()
+			new_time = time.mktime((datetime.datetime.now()+datetime.timedelta(seconds=1)).timetuple())
+			os.utime(filename,(new_time,new_time))
+			self.assertEqual("(function() {\n\n  (function() {});\n\n}).call(this);\n",str(self.env['tmp.js']))
+
+		self.sandbox(filename,callback=do_test)
+
+	def testSeperateContextsClassesForEachInstance(self):
+		''' Test seperate contexts classes for each instance '''
+
+		e1 = self.new_environment()
+		e2 = self.new_environment()
+
+		self.assertRaises(
+				AttributeError,
+				getattr,
+				e1.context_class,
+				'foo'
+			)
+
+		self.assertRaises(
+				AttributeError,
+				getattr,
+				e2.context_class,
+				'foo'
+			)
+
+		def foo(self):
+			pass
+
+		def bind_method(func,klass):
+			import new
+			method = new.instancemethod(func,None,klass)
+			setattr(klass,	func.__name__,method)
+
+		bind_method(foo,e1.context_class)
+		assert getattr(e1.context_class,'foo')
+		self.assertRaises(
+				AttributeError,
+				getattr,
+				e2.context_class,
+				'foo'
+			)
+
+	def testRegisteringEngineAddsToTheEnvironmentsExtensions(self):
+		''' Test registering engine adds to the environments extensions '''
+
+		assert not self.env.engines['.foo']
+		assert ".foo" not in self.env.extensions
+
+		self.env.register_engine('.foo',lean.StringTemplate)
+
+		assert self.env.engines['.foo']
+		assert ".foo" in self.env.extensions
+
+	def testSeperateEnginesForEachInstance(self):
+		''' Test seperate engines for each instance '''
+
+		e1 = self.new_environment()
+		e2 = self.new_environment()
+
+		self.assertIsNone(e1.engines['.foo'])
+		self.assertIsNone(e2.engines['.foo'])
+
+		e1.register_engine('.foo',lean.StringTemplate)
+
+		assert e1.engines['.foo']
+		self.assertIsNone(e2.engines['foo'])
+
+	def testDisablingDefaultDirectiveProcessor(self):
+		''' Test disabling default directive processor '''
+
+		self.env.unregister_preprocessor('application/javascript',rivets.processing.DirectiveProcessor)
+		self.assertEqual(
+				"// =require \"notfound\"\n;\n", 
+				str(self.env["missing_require.js"])
+			)
+
+class TestIndex(RivetsTest,EnvironmentTests):
+
+	def new_environment(self,callback=None):
+		env = rivets.Environment('.')
+		env.append_path(self.fixture_path('default'))
+		env.cache = {}
+		return callback(env).index if callback else env.index
+
+	def setUp(self):
+		self.env = self.new_environment()
+
+	def testDoesNotAllowNewMimeTypesToBeAdded(self):
+		''' Test does not allow new mime types to be added '''
+		self.assertRaises(
+				TypeError,
+				self.env.register_mimetype,
+				".jst",
+				"application/javascript"
+			)
+
+	def testChangeInEnvironmentMimeTypesDoesNotAffectIndex(self):
+		''' Test change in environment mime types does not affect index '''
+
+		env = rivets.Environment('.')
+		env.register_mimetype('.jst','application/javascript')
+		index = env.index
+
+		self.assertEqual('application/javascript',index.mimetypes['.jst'])
+		env.register_mimetype(".jst",None)
+		self.assertEqual('application/javascript',index.mimetypes['.jst'])
+
+	def testDoesNotAllowBundleProcessorsToBeAdded(self):
+		''' Test does not allow bundle processors to be added '''
+
+		self.assertRaises(
+				TypeError,
+				self.env.register_bundleprocessor,
+				'text/css',
+				WhitespaceCompressor
+			)
+
+	def testDoesNotAllowBundleProcessorsToBeRemoved(self):
+		''' Test does not allow bundle processors to be removed '''
+
+		self.assertRaises(
+				TypeError,
+				self.env.unregister_bundleprocessor,
+				'text/css',
+				WhitespaceCompressor
+			)
+
+	def testChangeInEnvironmentBundleProcessorsDoesNotAffectIndex(self):
+		''' Test change in environment bundle processors does not affect index '''
+
+		env = rivets.Environment('.')
+		index = env.index
+
+		assert WhitespaceCompressor not in index.processors.get_bundleprocessors('text/css')
+		env.register_bundleprocessor('text/css',WhitespaceCompressor)
+		assert WhitespaceCompressor not in index.processors.get_bundleprocessors('text/css')
+
+	def testDoesNotAllowJSCompressorToBeChanged(self):
+		''' Test does not allow JS compressor to be changed '''
+
+		self.assertRaises(
+				TypeError,
+				self.env.js_compressor,
+				WhitespaceCompressor
+			)
+
+	def testDoesNotAllowCSSCompressorToBeChanged(self):
+		''' Test does not allow CSS compressor to be changed '''
+
+		self.assertRaises(
+				TypeError,
+				self.env.css_compressor,
+				WhitespaceCompressor
+			)	
+
+	def testChangeInEnvironmentEnginesDoesNotAffectIndex(self):
+		''' Test change in environment engines does not affect index '''
+
+		env = rivets.Environment('.')
+		index = env.index
+
+		self.assertIsNone(env.engines['.foo'])
+		self.assertIsNone(index.engines['.foo'])
+
+		env.register_engine('.foo',lean.StringTemplate)
+		
+		assert env.engines['.foo']
+		self.assertIsNone(index.engines['.foo'])
 
 if __name__ == '__main__':
     unittest.main()

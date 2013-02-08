@@ -1,8 +1,9 @@
 from ..extensions import normalize_extension
 
-class EngineRegistry:
+class EngineRegistry(object):
 
-	engines = {}
+	def __init__(self):
+		self.engines = {}
 
 	def register_engine(self,extension,engine):
 
@@ -18,6 +19,9 @@ class EngineRegistry:
 			return self.engines[ext]
 		else:
 			return None
+
+	def __getitem__(self,extension):
+		return self.get_engine(extension)
 
 	@property
 	def engine_extensions(self):

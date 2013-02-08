@@ -50,8 +50,8 @@ class TestEngines(RivetsTest):
 		registry = rivets.engines.engine_registry
 
 		registry.register_engine('.alert',AlertTemplate)
-		self.assertEqual(AlertTemplate,registry.get_engine('alert'))
-		self.assertEqual(AlertTemplate,registry.get_engine('.alert'))
+		self.assertEqual(AlertTemplate,registry['alert'])
+		self.assertEqual(AlertTemplate,registry['.alert'])
 
 		env = self.new_environment()
 		asset = env['hello.alert']

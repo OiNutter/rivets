@@ -22,7 +22,10 @@ class Environment(Base):
 		self.mimetypes = copy.deepcopy(mimetype_registry)
 		self.processors = copy.deepcopy(processor_registry)
 
-		self.context_class = Context
+		class ctx(Context):
+			pass
+
+		self.context_class = ctx
 
 		for path in path_registry.paths:
 			self.search_path.append_path(path)

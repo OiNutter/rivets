@@ -4,6 +4,7 @@ from hashlib import md5
 import json
 import copy
 import threading
+import hashlib
 
 from assets import Asset, AssetAttributes, BundledAsset, ProcessedAsset, StaticAsset
 from errors import FileNotFound, CircularDependencyError
@@ -16,13 +17,33 @@ class Base(Paths,object):
 	_digest = None
 
 	_circular_calls = None
+	_digest_class = hashlib.md5
+	_version = None
+
+	@property
+	def version(self):
+		return self._version
+
+	@version.setter
+	def version(self,value):
+		self.expire_index()
+		self._version = value
+
+	@property
+	def digest_class(self):
+		return self._digest_class
+
+	@digest_class.setter
+	def digest_class(self,value):
+		self.expire_index()
+		self._digest_class = value
 
 	@property
 	def digest(self):
 
 		if not self._digest:
 			from version import VERSION
-			self._digest = md5()
+			self._digest = self.digest_class()
 			self._digest.update(str(VERSION))
 			self._digest.update(str(self.version))
 
@@ -84,11 +105,21 @@ class Base(Paths,object):
 		self.expire_index()
 		self.processors.unregister_compressor(mimetype,name)
 
-	def set_js_compressor(self,compressor):
-		self.processors.set_js_compressor(compressor)
+	@property
+	def js_compressor(self):
+		return self.processors.js_compressor
 
-	def set_css_compressor(self,compressor):
-		self.processors.set_css_compressor(compressor)
+	@js_compressor.setter
+	def js_compressor(self,compressor):
+		self.processors.js_compressor = compressor
+
+	@property
+	def css_compressor(self):
+		return self.processors.css_compressor
+
+	@css_compressor.setter
+	def css_compressor(self,compressor):
+		self.processors.css_compressor = compressor
 
 	def add_engine_to_search_path(self,extension,engine):
 		self.search_path.append_extension(extension)
