@@ -9,7 +9,7 @@ setup(name='Rivets',
 	  author_email='will@oinutter.co.uk',
 	  packages=['rivets'],
 	  package_dir={'rivets': 'rivets'},
-	  requires=['crawl(>=0.5.3)','lean(>=0.2.3)','uglipyjs','slimmer'],
+	  requires=['crawl(>=0.5.4)','lean(>=0.2.3)','uglipyjs','slimmer'],
 	  license='MIT License',
 	  classifiers=[
 	  		'Development Status :: 3 - Alpha',
