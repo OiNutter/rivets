@@ -146,9 +146,9 @@ class DirectiveProcessor(Template):
 
 			self.context.depend_on(root)
 			print 'FILE: ', self._file
-			for pathname in self.entries(root):
-				print 'PATH: ',pathname
+			for pathname in sorted(self.entries(root)):
 				pathname = os.path.join(root,pathname)
+				print 'PATH: ',pathname
 				if pathname ==self._file:
 					continue
 				elif self.context.is_asset_requirable(pathname):
