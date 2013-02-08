@@ -138,14 +138,16 @@ class DirectiveProcessor(Template):
 							path
 						)
 			root = os.path.realpath(root)
+			print 'ROOT: ', root
 
 			stats = self.stat(root)
 			if not stats or not os.path.isdir(root):
 				raise ArgumentError("require_directory argument must be a directory")
 
 			self.context.depend_on(root)
-
+			print 'FILE: ', self._file
 			for pathname in self.entries(root):
+				print 'PATH: ',pathname
 				pathname = os.path.join(root,pathname)
 				if pathname ==self._file:
 					continue
