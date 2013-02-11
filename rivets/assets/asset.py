@@ -169,9 +169,6 @@ class Asset(object):
 		if not stat:
 			return False
 
-		print mtime
-		print stat.st_mtime
-
 		if int(mtime) >= int(stat.st_mtime):
 			return True
 
