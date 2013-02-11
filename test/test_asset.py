@@ -1020,7 +1020,7 @@ class BundledAssetTest(RivetsTest,AssetTests,FreshnessTests):
 	def testAssetLengthIsSourceLengthWithUnicodeCharacters(self):
 		''' Test asset length is source length with unicode characters '''
 		self.assertEqual(
-				6,
+				8,
 				self.get_asset('unicode.js').length
 			)
 

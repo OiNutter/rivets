@@ -3,15 +3,15 @@ import re
 from hashlib import md5
 import json
 import copy
-import threading
 import hashlib
 
 from assets import Asset, AssetAttributes, BundledAsset, ProcessedAsset, StaticAsset
 from errors import FileNotFound, CircularDependencyError
 from paths import Paths
+from server import Server
+from utils import read_unicode
 
-
-class Base(Paths,object):
+class Base(Paths,Server,object):
 
 	default_encoding = 'utf8'
 	_digest = None
@@ -55,8 +55,8 @@ class Base(Paths,object):
 			data = open(path).read()
 			digest.update(data)
 		elif os.path.isdir(path):
-			entries = self.search_path.entries(path)
-			digest.update(','.join(entries).encode('utf8'))
+			entries = self.search_path.entries(unicode(path))
+			digest.update(','.join(entries))
 		return digest
 
 	@property
@@ -236,7 +236,7 @@ class Base(Paths,object):
 			asset = self.resolve(logical_path,**options)
 		if asset:
 			return asset
-		raise FileNotFound("Couldn't find file %s" % logical_path)
+		raise FileNotFound("Couldn't find file '%s'" % logical_path)
 
 	def compile(self,path):
 		
@@ -246,7 +246,7 @@ class Base(Paths,object):
 	def each_entry(self,root,callback=None):
 
 		paths = []
-		for filename in sorted(self.entries(root)):
+		for filename in sorted(self.entries(root.encode('utf8'))):
 			path = os.path.join(root,filename)
 			paths.append(path)
 
@@ -280,10 +280,8 @@ class Base(Paths,object):
 
 		callback = kwargs.pop('callback',None)
 
-		#filters = [item for sublist in args  for item in sublist ]
 		files = {}
 
-		#print args
 		filters = list(filters)
 
 		def do(filename):

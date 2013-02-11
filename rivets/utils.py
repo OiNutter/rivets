@@ -7,9 +7,9 @@ def read_unicode(filename,external_encoding='utf8'):
 	data = codecs.open(filename,encoding=external_encoding).read()
 
 	if UTF8_BOM_PATTERN.match(data):
-		return UTF8_BOM_PATTERN.sub('',data)
+		return unicode(UTF8_BOM_PATTERN.sub('',data)).encode('utf8')
 	else:
-		return data
+		return unicode(data).encode('utf8')
 
 def unique_list(seq):
 	seen = set()

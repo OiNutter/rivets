@@ -281,7 +281,6 @@ class EnvironmentTests(object):
 		entries = []
 
 		def do_test(path):
-			print path
 			entries.append(path)
 
 		self.env.each_entry(self.fixture_path("default"),do_test)

@@ -68,7 +68,7 @@ class Context(object):
 			if self.environment.stat(path):
 				return path
 			else:
-				raise FileNotFound("Couldn't find file %s" % path)
+				raise FileNotFound("Couldn't find file '%s'" % path)
 
 		elif options.has_key('content_type') and options['content_type']:
 			content_type = self.content_type if options['content_type'] == 'self' else options['content_type']
@@ -85,7 +85,7 @@ class Context(object):
 			if asset:
 				return asset
 
-			raise FileNotFound("Couldn't find file %s" % path)
+			raise FileNotFound("Couldn't find file '%s'" % path)
 
 		else:
 			options['base_path'] = os.path.realpath(os.path.dirname(self.pathname))
@@ -119,10 +119,11 @@ class Context(object):
 		return requirable
 
 	def annotate_exception(self,exception):
+
 		location = self.pathname
 		location += ":%s" % self.line if self.line else ''
 
-		raise exception.__class__("%s (in %s)" % (str(exception),location))
+		raise exception.__class__("%s\\n  (in %s)" % (str(exception),location))
 
 	def asset_data_uri(self,path):
 		self.depend_on_asset(path)

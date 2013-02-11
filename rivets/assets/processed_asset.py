@@ -16,7 +16,7 @@ class ProcessedAsset(Asset):
 			self.source = context.evaluate(pathname)
 			self.length = len(self.source)
 			digest = environment.digest
-			digest.update(self.source.encode('utf8'))
+			digest.update(self.source)
 			self.digest = digest.hexdigest()
 
 			self.build_required_assets(environment,context)
