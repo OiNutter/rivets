@@ -9,5 +9,6 @@ install:
   - "pip install mako"
   - "pip install pyyaml"
   - "pip install unittest2"
+  - "pip install routes"
   - "pip install cherrypy"
 script: nosetests
