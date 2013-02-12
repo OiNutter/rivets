@@ -1,6 +1,8 @@
 Rivets
 ======
 
+[![Build Status](https://travis-ci.org/OiNutter/rivets.png?branch=master)](https://travis-ci.org/OiNutter/rivets)
+
 Rivets is a Python port of the [Rivets](https://github.com/sstephenson/sprockets) 
 Ruby library for compiling and serving web assets.
 It features declarative dependency management for JavaScript and CSS
