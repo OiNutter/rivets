@@ -308,3 +308,8 @@ tracker](https://github.com/oinutter/rivets/issues). Or, clone
 the Rivets repository, write a failing test case, fix the bug and
 submit a pull request.
 
+## Credits ##
+
+Huge amounts of credit to Sam Stephenson(@sstephenson) and Josh Peek(@josh) for all their work on the original 
+[Sprockets](https://github.com/sstephenson/sprockets) gem. I have basically just rewritten their code and tests in python, tweaking where necessary to make things more 'pythonic' (I hope) and making them work with existing python modules.
+
