@@ -1,159 +1,306 @@
 Rivets
 ======
 
-[![Build Status](https://travis-ci.org/OiNutter/rivets.png?branch=master)](undefined)
+Rivets is a Python port of the [Rivets](https://github.com/sstephenson/sprockets) 
+Ruby library for compiling and serving web assets.
+It features declarative dependency management for JavaScript and CSS
+assets, as well as a powerful preprocessor pipeline that allows you to
+write assets in languages like CoffeeScript and SCSS.
 
-Rivets is a port of [Sprockets](https://github.com/sstephenson/sprockets) to Python. 
-At the moment it just has the core functionality, and is probably closer to Sprockets 1.0 than to the
-current advanced features 
+# Installation #
 
-It's still a work in progress and has not been tested in production yet, but you're
-welcome to fork and help get it working quicker if you so wish. At the
-moment it will concatenate js and css files, as well as compiling CoffeeScript and Scss,
-and minify the output using the appropriate engine. At the moment it is using 
-[UglipyJS](https://github.com/OiNutter/uglipyjs) for js files and [Slimmer](http://pypi.python.org/pypi/slimmer/)
-for css.
+Install rivets with pip:
 
-I'm using [Crawl](https://github.com/OiNutter/crawl), the
-[Hike](https://github.com/sstephenson/hike) port I wrote to scan for the
-assets. That is in a similar situation to Rivets, although slightly more
-along in the development cycle, as they are being developed in tandem. I'm also using 
-[Lean](https://github.com/OiNutter/lean), another Ruby port, this time of 
-[Tilt](https://github.com/rtomayko/tilt) to provide a generic interface to the various templating and
-processing modules being used.
-
-Install
--------
-
-```bash
+` bash
 $ pip install rivets
-```
+`
 
-See the class docs for each processor and engine in `processors.py` and `engines.py` to find the install command.
+# Understanding the Rivets Environment #
 
-Sample Usage
-------------
+You'll need an instance of the `rivets.Environment` class to
+access and serve assets from your application.
 
-```python
-import rivets
-env = rivets.Environment()
-env.add_path('test/js')
-env.compile('blah')
-```
+The Rivets `Environment` has methods for retrieving and serving
+assets, manipulating the load path, and registering processors. It is
+also a CherryPy compatible Route Dispatcher application that can be mounted at a 
+URL to serve assets over HTTP.
 
-Assets
-------
+## The Load Path ##
 
+The *load path* is an ordered list of directories that Rivets uses
+to search for assets.
 
+In the simplest case, a Rivets environment's load path will consist
+of a single directory containing your application's asset source
+files. When mounted, the environment will serve assets from this
+directory as if they were static files in your public root.
 
-Directives
-----------
+The power of the load path is that it lets you organize your source
+files into multiple directories -- even directories that live outside
+your application -- and combine those directories into a single
+virtual filesystem. That means you can easily bundle JavaScript, CSS
+and images into a python library and import them into your application.
 
-At the moment rivets just uses the `require` directive but I will be adding more to match those available in Sprockets.
+### Manipulating the Load Path ###
 
-Directives are specified in comment blocks at the start of a file:
+To add a directory to your environment's load path, use the
+`append_path` and `prepend_path` methods. Directories at the beginning
+of the load path have precedence over subsequent directories.
 
-JS
-```javascript
-//= require 'jquery'
-/*
- *= require 'mustache'
- */
-```
+` python
+environment = rivets.Environment()
+environment.append_path('app/assets/javascripts')
+environment.append_path('lib/assets/javascripts')
+environment.append_path('vendor/assets/jquery')
+`
 
-CSS
-```css
-/*
- *= require 'fonts'
- */
-```
+In general, you should append to the path by default and reserve
+prepending for cases where you need to override existing assets.
 
-CoffeeScript
-```coffeescript
-#= require 'zepto'
-```
+## Accessing Assets ##
 
-SCSS
-```scss
-//= require 'compass'
-/*
- * require 'mixins'
- */
-```
+Once you've set up your environment's load path, you can mount the
+environment as a Rack server and request assets via HTTP. You can also
+access assets programmatically from within your application.
 
-###Require###
+### Logical Paths ###
 
-The `require` directive will search for a single file inside the load path and raise an error if it is not found.
+Assets in Rivets are always referenced by their *logical path*.
 
-Engines
--------
+The logical path is the path of the asset source file relative to its
+containing directory in the load path. For example, if your load path
+contains the directory `app/assets/javascripts`:
 
-Rivets can compile asset files in other languages that compile to Javascript or CSS. Currently Rivets comes with the following engines.
+<table>
+  <tr>
+    <th>Asset source file</th>
+    <th>Logical path</th>
+  </tr>
+  <tr>
+    <td>app/assets/javascripts/application.js</td>
+    <td>application.js</td>
+  </tr>
+  <tr>
+    <td>app/assets/javascripts/models/project.js</td>
+    <td>models/project.js</td>
+  </tr>
+</table>
 
-###CoffeeScript###
+In this way, all directories in the load path are merged to create a
+virtual filesystem whose entries are logical paths.
 
-CoffeeScript compiles to Javascript and features a cleaner, more Python like syntax as well as handling for function scope binding.
+### Serving Assets Over HTTP ###
 
-CoffeeScript assets have a `.js.coffee` extension and require the `Python-CoffeeScript` module to be installed.
+When you mount an environment, all of its assets are accessible as
+logical paths underneath the *mount point*. For example, if you mount
+your environment at `/assets` and request the URL
+`/assets/application.js`, Rivets will search your load path for the
+file named `application.js` and serve it.
 
-```bash
-$ pip install coffeescript
-```
+To mount the environment in CherryPy you will need to create an instance of the environment and map the route to 
+it's call action:
 
-###SCSS###
-
-SCSS compiles to CSS and features a number of enhancements, including rule nesting, mixins and variables, enabling you to write smaller, more easily updateable CSS styles.
-
-SCSS assets have a `.css.scss` extension and require the `pyScss` module to be installed.
-
-```bash
-$ pip install pyscss
-```
-
-###Adding Your Own Engines###
-
-If you wish to add your own processing engines you can subclass Lean.Template and register the engine for a given extension like so:
-
-```python
-
-from lean.template import Template
+` python
 import rivets
 
-class FooEngine(Template):
-	''' Your Code Here '''
+environment = rivets.Environment()
+environment.append_path('app/assets/javascripts')
+environment.append_path('app/assets/stylesheets')
 
-env = rivets.Environment()
-env.register_engine('.foo',FooEngine)
-```
+d = cherrypy.dispatch.RoutesDispatcher()
+d.connect('assets','/assets/:path',controller = env, action='run')
+`
 
-In this case, assuming FooEngine compiled to Javascript, your files would have the extension `.js.foo`.
+### Accessing Assets Programmatically ###
 
-Processors
-----------
+You can use the `find_asset` method (aliased as `[]`) to retrieve an
+asset from a Rivets environment. Pass it a logical path and you'll
+get a `BundledAsset` instance back:
 
-Rivets enables the specification of `Processors` that can be run either before or after a file is compiled and concatentated. `Preprocessors` are run before an asset is processed, and `Postprocessors` are run afterwards. Processors are subclasses of Lean templates and can be registered in the following manner:
+    environment['application.js']
+    # => #<rivets.assets.bundled_asset.BundledAsset object ...>
 
-```python
-from lean.template import Template
-import rivets
+Call `to_string` on the resulting asset or cast to `str` to access its contents, `length` to
+get its length in bytes, `mtime` to query its last-modified time, and
+`pathname` to get its full path on the filesystem.
 
-class FooProcessor(Template):
-	''' Your Code Here '''
+# Using Engines #
 
-class BlahProcessor(Template):
-	''' Your Code Here '''
+Asset source files can be written in another language, like SCSS or
+CoffeeScript, and automatically compiled to CSS or JavaScript by
+Rivets. Compilers for these languages are called *engines*.
 
-env = rivets.Environment()
-env.register_preprocessor('.js',FooProcessor)
-eng.register_postprocessor('.js',BlahProcessor)
-```
+Engines are specified by additional extensions on the asset source
+filename. For example, a CSS file written in SCSS might have the name
+`layout.css.scss`, while a JavaScript file written in CoffeeScript
+might have the name `dialog.js.coffee`.
 
+## Styling with SCSS ##
 
+[Sass](http://sass-lang.com/) is a language that compiles to CSS and
+adds features like nested rules, variables, mixins and selector
+inheritance.
 
-License
--------
+You will need to install [pyScss](https://github.com/Kronuz/pyscss) to use Scss
+in your application.
 
-Copyright 2011 Will McKenzie
+Rivets currently only supports the newer Scss syntax. Unfortunately due to differences between
+pyScss's implementation of Scss and the original Ruby gem's implementation, not all Sass features 
+are properly supported. I'm going to be looking at doing a more consistent port of the original library
+to enable Rivets to override the importers to handle caching better etc.
 
-Licensed under the MIT License, please see the license file for more
-details.
+## Scripting with CoffeeScript ##
+
+[CoffeeScript](http://jashkenas.github.com/coffee-script/) is a
+language that compiles to the "good parts" of JavaScript, featuring a
+cleaner syntax with array comprehensions, classes, and function
+binding.
+
+You'll need to have the [Python-CoffeeScript](https://github.com/doloopwhile/python-coffeescript) module installed
+on your system to use the CoffeeScript processing.
+
+To write JavaScript assets with CoffeeScript, use the extension
+`.js.coffee`.
+
+## Invoking Python with Mako ##
+
+Rivets provides a Mako engine for preprocessing assets using
+embedded Python code. Append `.mako` to a CSS or JavaScript asset's
+filename to enable the Mako engine.
+
+**Note**: Rivets processes multiple engine extensions in order from
+  right to left, so you can use multiple engines with a single
+  asset. For example, to have a CoffeeScript asset that is first
+  preprocessed with Mako, use the extension `.js.coffee.mako`.
+
+Python code embedded in an asset is evaluated in the context of a
+`rivets.Context` instance for the given asset. Common uses for Mako
+include:
+
+- embedding another asset as a Base64-encoded `data:` URI with the
+  `asset_data_uri` helper
+- inserting the URL to another asset, such as with the `asset_path`
+  helper provided by the Rivets CherryPy plugin
+- embedding other application resources, such as a localized string
+  database, in a JavaScript asset via JSON
+- embedding version constants loaded from another file
+
+# Managing and Bundling Dependencies #
+
+You can create *asset bundles* -- ordered concatenations of asset
+source files -- by specifying dependencies in a special comment syntax
+at the top of each source file.
+
+Rivets reads these comments, called *directives*, and processes
+them to recursively build a dependency graph. When you request an
+asset with dependencies, the dependencies will be included in order at
+the top of the file.
+
+## The Directive Processor ##
+
+Rivets runs the *directive processor* on each CSS and JavaScript
+source file. The directive processor scans for comment lines beginning
+with `=` in comment blocks at the top of the file.
+
+`
+//= require jquery
+//= require jquery-ui
+//= require backbone
+//= require_tree .
+`
+
+The first word immediately following `=` specifies the directive
+name. Any words following the directive name are treated as
+arguments. Arguments may be placed in single or double quotes if they
+contain spaces, similar to commands in the Unix shell.
+
+**Note**: Non-directive comment lines will be preserved in the final
+  asset, but directive comments are stripped after
+  processing. Rivets will not look for directives in comment blocks
+  that occur after the first line of code.
+
+### Supported Comment Types ###
+
+The directive processor understands comment blocks in three formats:
+
+`
+/* Multi-line comment blocks (CSS, SCSS, JavaScript)
+*= require foo
+*/
+
+// Single-line comment blocks (SCSS, JavaScript)
+//= require foo
+
+# Single-line comment blocks (CoffeeScript)
+#= require foo
+`
+
+## Rivets Directives ##
+
+You can use the following directives to declare dependencies in asset
+source files.
+
+For directives that take a *path* argument, you may specify either a
+logical path or a relative path. Relative paths begin with `./` and
+reference files relative to the location of the current file.
+
+### The `require` Directive ###
+
+`require` *path* inserts the contents of the asset source file
+specified by *path*. If the file is required multiple times, it will
+appear in the bundle only once.
+
+### The `include` Directive ###
+
+`include` *path* works like `require`, but inserts the contents of the
+specified source file even if it has already been included or
+required.
+
+### The `require_directory` Directive ###
+
+`require_directory` *path* requires all source files of the same
+format in the directory specified by *path*. Files are required in
+alphabetical order.
+
+### The `require_tree` Directive ###
+
+`require_tree` *path* works like `require_directory`, but operates
+recursively to require all files in all subdirectories of the
+directory specified by *path*.
+
+### The `require_self` Directive ###
+
+`require_self` tells Rivets to insert the body of the current
+source file before any subsequent `require` or `include` directives.
+
+### The `depend_on` Directive ###
+
+`depend_on` *path* declares a dependency on the given *path* without
+including it in the bundle. This is useful when you need to expire an
+asset's cache in response to a change in another file.
+
+### The `stub` Directive ###
+
+`stub` *path* allows dependency to be excluded from the asset bundle.
+The *path* must be a valid asset and may or may not already be part
+of the bundle. Once stubbed, it is blacklisted and can't be brought
+back by any other `require`.
+
+# Development #
+
+## Contributing ##
+
+The Rivets source code is [hosted on
+GitHub](https://github.com/oinutter/sprockets). You can check out a
+copy of the latest code using Git:
+
+` bash
+$ git clone https://github.com/oinutter/rivets.git
+`
+
+If you've found a bug or have a question, please open an issue on the
+[Rivets issue
+tracker](https://github.com/oinutter/rivets/issues). Or, clone
+the Rivets repository, write a failing test case, fix the bug and
+submit a pull request.
+
