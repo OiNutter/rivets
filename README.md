@@ -13,9 +13,9 @@ write assets in languages like CoffeeScript and SCSS.
 
 Install rivets with pip:
 
-` bash
+``` bash
 $ pip install rivets
-`
+```
 
 # Understanding the Rivets Environment #
 
@@ -49,12 +49,12 @@ To add a directory to your environment's load path, use the
 `append_path` and `prepend_path` methods. Directories at the beginning
 of the load path have precedence over subsequent directories.
 
-` python
+``` python
 environment = rivets.Environment()
 environment.append_path('app/assets/javascripts')
 environment.append_path('lib/assets/javascripts')
 environment.append_path('vendor/assets/jquery')
-`
+```
 
 In general, you should append to the path by default and reserve
 prepending for cases where you need to override existing assets.
@@ -102,7 +102,7 @@ file named `application.js` and serve it.
 To mount the environment in CherryPy you will need to create an instance of the environment and map the route to 
 it's call action:
 
-` python
+``` python
 import rivets
 
 environment = rivets.Environment()
@@ -111,7 +111,7 @@ environment.append_path('app/assets/stylesheets')
 
 d = cherrypy.dispatch.RoutesDispatcher()
 d.connect('assets','/assets/:path',controller = env, action='run')
-`
+```
 
 ### Accessing Assets Programmatically ###
 
@@ -119,8 +119,10 @@ You can use the `find_asset` method (aliased as `[]`) to retrieve an
 asset from a Rivets environment. Pass it a logical path and you'll
 get a `BundledAsset` instance back:
 
-    environment['application.js']
-    # => #<rivets.assets.bundled_asset.BundledAsset object ...>
+``` python
+environment['application.js']
+# => #<rivets.assets.bundled_asset.BundledAsset object ...>
+```
 
 Call `to_string` on the resulting asset or cast to `str` to access its contents, `length` to
 get its length in bytes, `mtime` to query its last-modified time, and
@@ -204,12 +206,12 @@ Rivets runs the *directive processor* on each CSS and JavaScript
 source file. The directive processor scans for comment lines beginning
 with `=` in comment blocks at the top of the file.
 
-`
+```
 //= require jquery
 //= require jquery-ui
 //= require backbone
 //= require_tree .
-`
+```
 
 The first word immediately following `=` specifies the directive
 name. Any words following the directive name are treated as
@@ -225,7 +227,7 @@ contain spaces, similar to commands in the Unix shell.
 
 The directive processor understands comment blocks in three formats:
 
-`
+```
 /* Multi-line comment blocks (CSS, SCSS, JavaScript)
 *= require foo
 */
@@ -235,7 +237,7 @@ The directive processor understands comment blocks in three formats:
 
 # Single-line comment blocks (CoffeeScript)
 #= require foo
-`
+```
 
 ## Rivets Directives ##
 
@@ -296,9 +298,9 @@ The Rivets source code is [hosted on
 GitHub](https://github.com/oinutter/sprockets). You can check out a
 copy of the latest code using Git:
 
-` bash
+``` bash
 $ git clone https://github.com/oinutter/rivets.git
-`
+```
 
 If you've found a bug or have a question, please open an issue on the
 [Rivets issue
