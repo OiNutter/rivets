@@ -1,7 +1,7 @@
 from distutils.core import setup
 
 setup(name='Rivets',
-	  version='0.2',
+	  version='0.3',
 	  url='https://github.com/OiNutter/rivets',
 	  download_url='https://github.com/OiNutter/rivets/tarball/master',
 	  description='Python asset packaging system. Based on Sprockets ruby gem',
@@ -9,7 +9,7 @@ setup(name='Rivets',
 	  author_email='will@oinutter.co.uk',
 	  packages=['rivets'],
 	  package_dir={'rivets': 'rivets'},
-	  requires=['crawl(>=0.5.4)','lean(>=0.2.3)','uglipyjs','slimmer'],
+	  requires=['crawl(>=0.5.4)','lean(>=0.2.3)','cherrypy'],
 	  license='MIT License',
 	  classifiers=[
 	  		'Development Status :: 3 - Alpha',
