@@ -12,19 +12,20 @@ import rivets
 
 class TestManifest(RivetsTest):
 
-	def setup(self):
+	def setUp(self):
 		self.env = rivets.Environment('.')
 		self.env.append_path(self.fixture_path('default'))
-		self.dir = os.path.join(tempfile.tempdir,'rivets/manifest')
+		self.dir = os.path.realpath(os.path.join(tempfile.gettempdir(),'rivets/manifest'))
 		self.manifest = rivets.Manifest(environment=self.env,path=os.path.join(self.dir,'manifest.json'))
 
-	def teardown(self):
-		os.rmdir(self.dir)
-		assert not os.listdir("%s/*"%self.dir)
+	def tearDown(self):
+		if os.path.exists(self.dir):
+			os.rmdir(self.dir)
+		assert not os.path.exists(self.dir)
 
 	def testSpecifyFullManifestPath(self):
 
-		directory = tempfile.tempdir
+		directory = os.path.realpath(tempfile.gettempdir())
 		path = os.path.join(directory,'manifest.json')
 
 		manifest = rivets.Manifest(environment=self.env,path=path)

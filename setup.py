@@ -1,7 +1,7 @@
 from setuptools import setup
 
 setup(name='Rivets',
-	  version='0.3.9',
+	  version='0.4.1',
 	  url='https://github.com/OiNutter/rivets',
 	  download_url='https://github.com/OiNutter/rivets/tarball/master',
 	  description='Python asset packaging system. Based on Sprockets ruby gem',

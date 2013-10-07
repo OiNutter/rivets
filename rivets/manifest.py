@@ -2,6 +2,7 @@ import json
 import os
 import binascii
 import datetime
+import regex as re
 
 from base import Base
 from assets import BundledAsset
@@ -12,13 +13,16 @@ class Manifest(object):
 
 		self.environment = environment
 
-		self.directory = os.path.realpath(directory) if directory else None
+		self.dir = os.path.realpath(directory) if directory else None
 		self.path = os.path.realpath(path) if path else None
+
+		if not self.dir and self.path:
+			self.dir = os.path.dirname(self.path)
 
 		if self.dir and not self.path:
 
 			paths = os.listdir(self.dir)
-			paths = [path for path in paths if re.match(r"""manifest*.json"""os.path.basename(path))]
+			paths = [path for path in paths if re.match(r"""manifest*.json""",os.path.basename(path))]
 
 			if paths:
 				self.path = paths[0]
@@ -31,11 +35,10 @@ class Manifest(object):
 
 		data = None
 
-		try:
-			if os.path.exists(self.path):
-				data = json.loads(open(self.path,'r+').read())
+		if os.path.exists(self.path):
+			data = json.loads(open(self.path,'r+').read())
 		
-		self.data if isinstance(data,dict) else {}
+		self.data = data if isinstance(data,dict) else {}
 
 	def assets(self):
 		return self.data['assets'] if self.data.has_key('assets') else {}
@@ -54,11 +57,12 @@ class Manifest(object):
 		def build_manifest(path):
 			asset = self.find_asset(path)
 			files = self.files()
+			assets = self.assets()
 			if asset:
 				files[asset.digest_path] = {
 					'logical_path':asset.logical_path,
 					'mtime': asset.mtime,
-					'size': asset.bytesize,
+					'size': asset.length,
 					'digest':asset.digest
 				}
 
@@ -74,7 +78,7 @@ class Manifest(object):
 					if isinstance(asset,BundledAsset):
 						asset.write_to("%s.gz"%target)
 
-			save
+			self.save()
 			return asset
 
 		for path in paths:
@@ -85,6 +89,7 @@ class Manifest(object):
 		gzip = "%s.gz" % path
 		logical_path = self.files()[filename]['logical_path']
 		assets = self.assets()
+		files = self.files()
 
 		if assets[logical_path] == filename:
 			del assets[logical_path]
@@ -115,7 +120,7 @@ class Manifest(object):
 			os.rmdir(self.dir)
 			print "Removed %s" % self.dir
 
-	def backups_for(logical_path):
+	def backups_for(self,logical_path):
 		files = self.files()
 		assets = self.assets()
 
